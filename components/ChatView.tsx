@@ -356,7 +356,8 @@ export default function ChatView() {
                 if (!convId) {
                   setConvId(e.conversationId);
                   loadedRef.current = e.conversationId; // URL sắp đổi do ta -> không tải lại
-                  router.replace(`/c/${e.conversationId}`);
+                  // replaceState (không điều hướng Next) để trang KHÔNG bị dựng lại và luồng trả lời không bị mất
+                  window.history.replaceState(null, '', `/c/${e.conversationId}`);
                 }
                 bumpConvs();
                 if (userTmp && e.userMessageId) {

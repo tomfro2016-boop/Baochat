@@ -1,0 +1,179 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+[data-theme='dark'] {
+  --bg: 11 13 18;
+  --surface: 19 23 34;
+  --surface2: 27 32 46;
+  --line: 42 48 68;
+  --ink: 245 245 250;
+  --muted: 146 152 170;
+  --primary: 120 103 255;
+  --accent: 169 156 255;
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  --bg: 247 247 251;
+  --surface: 255 255 255;
+  --surface2: 240 240 247;
+  --line: 224 226 238;
+  --ink: 22 24 35;
+  --muted: 104 110 130;
+  --primary: 120 103 255;
+  --accent: 98 82 224;
+  color-scheme: light;
+}
+
+html,
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  @apply bg-bg text-ink font-sans antialiased;
+  font-feature-settings: 'cv11', 'ss01';
+  letter-spacing: -0.005em;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--line)) transparent;
+}
+
+::selection {
+  background: rgb(var(--primary) / 0.35);
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-line/80 bg-surface transition-colors duration-200;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition duration-200 ease-out disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.985];
+  }
+  .btn-primary {
+    @apply btn bg-primary text-white hover:brightness-110;
+  }
+  .btn-ghost {
+    @apply btn border border-line bg-transparent text-ink hover:bg-surface2;
+  }
+  .btn-danger {
+    @apply btn border border-danger/40 text-danger hover:bg-danger/10;
+  }
+  .icon-btn {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-xl text-muted transition-colors hover:bg-surface2 hover:text-ink disabled:opacity-40;
+  }
+  .input {
+    @apply w-full rounded-xl border border-line bg-surface2 px-3.5 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-primary focus:ring-2 focus:ring-primary/25;
+  }
+  .label {
+    @apply mb-1.5 block text-[13px] font-medium text-muted;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-surface2 px-2.5 py-1 text-xs text-muted;
+  }
+  .prose-bc {
+    @apply text-[15px] leading-7;
+  }
+  .prose-bc > * + * {
+    @apply mt-3;
+  }
+  .prose-bc h1 {
+    @apply mt-5 text-xl font-semibold;
+  }
+  .prose-bc h2 {
+    @apply mt-5 text-lg font-semibold;
+  }
+  .prose-bc h3 {
+    @apply mt-4 text-base font-semibold;
+  }
+  .prose-bc ul {
+    @apply list-disc pl-6;
+  }
+  .prose-bc ol {
+    @apply list-decimal pl-6;
+  }
+  .prose-bc li + li {
+    @apply mt-1;
+  }
+  .prose-bc a {
+    @apply text-accent underline underline-offset-2 hover:opacity-80;
+  }
+  .prose-bc blockquote {
+    @apply border-l-2 border-primary/60 pl-4 text-muted;
+  }
+  .prose-bc :not(pre) > code {
+    @apply rounded-md bg-surface2 px-1.5 py-0.5 font-mono text-[13px] text-accent;
+  }
+  .prose-bc table {
+    @apply w-full border-collapse text-sm;
+  }
+  .prose-bc th,
+  .prose-bc td {
+    @apply border border-line px-3 py-2 text-left align-top;
+  }
+  .prose-bc th {
+    @apply bg-surface2 font-semibold;
+  }
+  .prose-bc hr {
+    @apply border-line;
+  }
+}
+
+/* Khối code luôn nền tối cho cả hai theme */
+.code-block pre {
+  margin: 0;
+  overflow-x: auto;
+  padding: 1rem;
+  background: #0d1117;
+}
+.code-block code.hljs {
+  background: transparent;
+  padding: 0;
+  font-size: 13px;
+}
+
+.typing-dot {
+  @apply inline-block h-1.5 w-1.5 rounded-full bg-muted animate-pulseDot;
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--primary) / 0.6);
+  outline-offset: 2px;
+}
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--line));
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--muted) / 0.5);
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

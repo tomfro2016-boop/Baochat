@@ -1,0 +1,74 @@
+'use client';
+
+import { isValidElement, memo, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import { Check, Copy } from 'lucide-react';
+
+function nodeText(node: any): string {
+  if (typeof node === 'string') return node;
+  if (Array.isArray(node)) return node.map(nodeText).join('');
+  if (isValidElement(node)) return nodeText((node.props as any).children);
+  return '';
+}
+
+function CodeBlock({ children }: { children: any }) {
+  const [copied, setCopied] = useState(false);
+  const codeEl: any = Array.isArray(children) ? children[0] : children;
+  const cls: string = codeEl?.props?.className || '';
+  const lang = /language-([\w-]+)/.exec(cls)?.[1] || 'code';
+  const text = nodeText(codeEl?.props?.children).replace(/\n$/, '');
+  return (
+    <div className="code-block my-3 overflow-hidden rounded-xl border border-line">
+      <div className="flex items-center justify-between bg-[#161b22] px-4 py-1.5 text-xs text-[#9298AA]">
+        <span className="font-mono">{lang}</span>
+        <button
+          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors hover:bg-white/10 hover:text-white"
+          onClick={async () => {
+            await navigator.clipboard.writeText(text);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          }}
+        >
+          {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? 'Copied' : 'Copy'}
+        </button>
+      </div>
+      <pre>{children}</pre>
+    </div>
+  );
+}
+
+function MarkdownImpl({ children }: { children: string }) {
+  return (
+    <div className="prose-bc break-words">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[[rehypeHighlight, { detect: true, ignoreMissing: true }]]}
+        components={{
+          pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
+          a: ({ href, children }) => (
+            <a href={href} target="_blank" rel="noopener noreferrer nofollow">
+              {children}
+            </a>
+          ),
+          // Không tải ảnh từ URL bên ngoài do AI sinh ra (tránh theo dõi/rò rỉ dữ liệu)
+          img: ({ alt, src }) => (
+            <a href={typeof src === 'string' ? src : '#'} target="_blank" rel="noopener noreferrer nofollow">
+              [{alt || 'image'}]
+            </a>
+          ),
+          table: ({ children }) => (
+            <div className="overflow-x-auto">
+              <table>{children}</table>
+            </div>
+          ),
+        }}
+      >
+        {children}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+export default memo(MarkdownImpl);

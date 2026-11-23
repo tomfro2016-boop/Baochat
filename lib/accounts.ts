@@ -32,6 +32,16 @@ export async function createUser(input: {
     const u = r.rows[0];
     await c.query(`INSERT INTO token_ledger (user_id, delta, balance_after, reason) VALUES ($1,$2,$2,'grant')`, [u.id, grant]);
     await c.query(`INSERT INTO ai_profiles (user_id, name, is_active) VALUES ($1,'Mặc định',true)`, [u.id]);
+    // Quà token đang chờ cho email này (đặt bằng scripts/token-policy.ts)
+    const gifts = (await c.query(`SELECT value FROM system_settings WHERE key = 'pending_gifts'`)).rows[0]?.value as Record<string, number> | undefined;
+    const gift = gifts?.[String(input.email).toLowerCase()];
+    if (gift && gift > 0) {
+      const g = await c.query(`UPDATE users SET token_balance = token_balance + $2::bigint WHERE id = $1 RETURNING token_balance`, [u.id, gift]);
+      await c.query(`INSERT INTO token_ledger (user_id, delta, balance_after, reason) VALUES ($1,$2,$3,'admin_adjust')`, [u.id, gift, g.rows[0].token_balance]);
+      const rest = { ...gifts }; delete rest[String(input.email).toLowerCase()];
+      await c.query(`UPDATE system_settings SET value = $1::jsonb WHERE key = 'pending_gifts'`, [JSON.stringify(rest)]);
+      u.token_balance = g.rows[0].token_balance;
+    }
     return u;
   });
 }

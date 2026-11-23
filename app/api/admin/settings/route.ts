@@ -11,8 +11,9 @@ export const GET = handler(async () => {
 
 const patch = z.object({
   token_reset_interval_hours: z.number().min(0.0167).max(24 * 90).optional(),
-  token_grant_min: z.number().int().min(0).max(10_000_000).optional(),
-  token_grant_max: z.number().int().min(0).max(10_000_000).optional(),
+  token_exhausted_wait_hours: z.number().min(0.0167).max(24 * 30).optional(),
+  token_grant_min: z.number().int().min(0).max(1_000_000_000_000).optional(),
+  token_grant_max: z.number().int().min(0).max(1_000_000_000_000).optional(),
   registration_open: z.boolean().optional(),
   default_model: z.string().max(80).optional(),
   chat_rate_per_minute: z.number().int().min(1).max(600).optional(),

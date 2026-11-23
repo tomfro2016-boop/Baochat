@@ -10,9 +10,9 @@ import { logActivity } from '@/lib/log';
 const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('block') }),
   z.object({ action: z.literal('unblock') }),
-  z.object({ action: z.literal('add_tokens'), amount: z.number().int().min(-10_000_000).max(10_000_000) }),
-  z.object({ action: z.literal('set_tokens'), amount: z.number().int().min(0).max(10_000_000) }),
-  z.object({ action: z.literal('set_quota'), amount: z.number().int().min(0).max(10_000_000) }),
+  z.object({ action: z.literal('add_tokens'), amount: z.number().int().min(-1_000_000_000_000).max(1_000_000_000_000) }),
+  z.object({ action: z.literal('set_tokens'), amount: z.number().int().min(0).max(1_000_000_000_000) }),
+  z.object({ action: z.literal('set_quota'), amount: z.number().int().min(0).max(1_000_000_000_000) }),
   z.object({ action: z.literal('reset_now') }),
 ]);
 

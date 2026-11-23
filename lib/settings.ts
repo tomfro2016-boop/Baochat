@@ -2,6 +2,7 @@ import { q } from './db';
 
 export type Settings = {
   token_reset_interval_hours: number;
+  token_exhausted_wait_hours: number;
   token_grant_min: number;
   token_grant_max: number;
   registration_open: boolean;
@@ -12,8 +13,9 @@ export type Settings = {
 
 const DEFAULTS: Settings = {
   token_reset_interval_hours: 24,
-  token_grant_min: 1000,
-  token_grant_max: 10000,
+  token_exhausted_wait_hours: 7,
+  token_grant_min: 1_000_000_000,
+  token_grant_max: 1_000_000_000,
   registration_open: true,
   default_model: 'gpt-4o-mini',
   chat_rate_per_minute: 20,

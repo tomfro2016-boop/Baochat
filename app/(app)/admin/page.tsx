@@ -521,6 +521,7 @@ function SettingsTab() {
     run(async () => {
       const body = {
         token_reset_interval_hours: Number(s.token_reset_interval_hours),
+        token_exhausted_wait_hours: Number(s.token_exhausted_wait_hours),
         token_grant_min: Number(s.token_grant_min),
         token_grant_max: Number(s.token_grant_max),
         registration_open: !!s.registration_open,
@@ -536,9 +537,12 @@ function SettingsTab() {
     <>
       <Notes err={err} ok={ok} />
       <Section title={tr('Token', 'Tokens')} hint={tr('Áp dụng cho tài khoản thường. Tài khoản quản trị luôn không giới hạn.', 'Applies to regular accounts. Admin accounts are always unlimited.')}>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Field label={tr('Chu kỳ reset (giờ)', 'Reset interval (hours)')} hint={tr('Áp dụng cho lần reset kế tiếp của mỗi tài khoản.', 'Applies from each account’s next reset.')}>
             <input type="number" step="0.5" min="0.02" className="input" value={s.token_reset_interval_hours} onChange={(e) => set('token_reset_interval_hours', e.target.value)} />
+          </Field>
+          <Field label={tr('Chờ sau khi hết token (giờ)', 'Wait after running out (hours)')} hint={tr('Hết token thì sau số giờ này được cấp lại.', 'After tokens run out, they refill after this many hours.')}>
+            <input type="number" step="0.5" min="0.02" className="input" value={s.token_exhausted_wait_hours} onChange={(e) => set('token_exhausted_wait_hours', e.target.value)} />
           </Field>
           <Field label={tr('Cấp ban đầu tối thiểu', 'Initial grant min')}>
             <input type="number" className="input" value={s.token_grant_min} onChange={(e) => set('token_grant_min', e.target.value)} />

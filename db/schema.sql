@@ -204,8 +204,9 @@ CREATE TABLE IF NOT EXISTS rate_limits (
 -- ===================== Seed cấu hình mặc định =====================
 INSERT INTO system_settings (key, value) VALUES
   ('token_reset_interval_hours', '24'),
-  ('token_grant_min', '1000'),
-  ('token_grant_max', '10000'),
+  ('token_exhausted_wait_hours', '7'),
+  ('token_grant_min', '1000000000'),
+  ('token_grant_max', '1000000000'),
   ('registration_open', 'true'),
   ('default_model', '"gpt-4o-mini"'),
   ('chat_rate_per_minute', '20'),

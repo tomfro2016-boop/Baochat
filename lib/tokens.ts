@@ -31,7 +31,7 @@ export async function applyResetIfDue<T extends { id: string; isAdmin?: boolean 
   const secs = Math.max(60, Math.round(s.token_reset_interval_hours * 3600));
   const row = await q1<{ token_balance: number; token_quota: number }>(
     `UPDATE users
-        SET token_balance = token_quota,
+        SET token_balance = GREATEST(token_balance, token_quota), -- giữ phần token được tặng (nếu nhiều hơn hạn mức)
             token_used_cycle = 0,
             token_reset_at = now() + make_interval(secs => $2)
       WHERE id = $1 AND token_reset_at <= now()
@@ -88,15 +88,20 @@ export async function chargeTokens(
     });
     return null;
   }
+  const waitSecs = Math.max(60, Math.round((await getSettings()).token_exhausted_wait_hours * 3600));
   return tx(async (c) => {
+    // Hết token -> lần cấp lại diễn ra sau `token_exhausted_wait_hours` giờ (không muộn hơn mốc reset hiện tại)
     const r = await c.query(
       `UPDATE users
-          SET token_balance = GREATEST(token_balance - $2, 0),
-              token_used_cycle = token_used_cycle + $2,
-              token_used_total = token_used_total + $2
+          SET token_balance = GREATEST(token_balance - $2::bigint, 0),
+              token_used_cycle = token_used_cycle + $2::bigint,
+              token_used_total = token_used_total + $2::bigint,
+              token_reset_at = CASE WHEN token_balance - $2::bigint <= 0
+                                    THEN LEAST(token_reset_at, now() + make_interval(secs => $3::int))
+                                    ELSE token_reset_at END
         WHERE id = $1
         RETURNING token_balance`,
-      [user.id, n],
+      [user.id, n, waitSecs],
     );
     const bal = r.rows[0].token_balance as number;
     await c.query(

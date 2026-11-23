@@ -11,8 +11,10 @@ export const pool: Pool =
   g.__baochatPool ??
   (g.__baochatPool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    max: 10,
-    idleTimeoutMillis: 30_000,
+    // Serverless (Vercel): mỗi instance giữ ít kết nối để không làm cạn pooler của Supabase
+    max: Number(process.env.DB_POOL_MAX) || (process.env.VERCEL ? 2 : 10),
+    idleTimeoutMillis: process.env.VERCEL ? 5_000 : 30_000,
+    connectionTimeoutMillis: 10_000,
     ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
   }));
 

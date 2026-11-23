@@ -20,7 +20,7 @@ const create = z.object({
   model_name: z.string().min(1).max(120),
   label: z.string().min(1).max(60),
   vision: z.boolean().default(false),
-  max_output: z.number().int().min(64).max(64000).default(4096),
+  max_output: z.number().int().min(64).max(64000).default(16384),
   multiplier: z.number().min(0.1).max(100).default(1),
   priority: z.number().int().min(0).max(10000).default(100),
 });

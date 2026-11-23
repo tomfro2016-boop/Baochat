@@ -329,7 +329,7 @@ function ModelsTab() {
   const [data, setData] = useState<{ models: any[]; providers: any[] } | null>(null);
   const [tests, setTests] = useState<Record<string, string>>({});
   const [testing, setTesting] = useState<string | null>(null);
-  const [form, setForm] = useState({ id: '', provider_id: '', model_name: '', label: '', vision: false, multiplier: 1, priority: 100, max_output: 4096 });
+  const [form, setForm] = useState({ id: '', provider_id: '', model_name: '', label: '', vision: false, multiplier: 1, priority: 100, max_output: 16384 });
   const { err, ok, run } = useAction();
 
   const load = useCallback(() => {
@@ -526,6 +526,7 @@ function SettingsTab() {
         token_grant_max: Number(s.token_grant_max),
         registration_open: !!s.registration_open,
         default_model: String(s.default_model),
+        studio_model: String(s.studio_model ?? ''),
         chat_rate_per_minute: Number(s.chat_rate_per_minute),
         max_upload_mb: Number(s.max_upload_mb),
       };
@@ -556,6 +557,9 @@ function SettingsTab() {
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label={tr('Model mặc định', 'Default model')}>
             <input className="input" value={s.default_model} onChange={(e) => set('default_model', e.target.value)} />
+          </Field>
+          <Field label={tr('Model cho AI Studio', 'AI Studio model')} hint={tr('ID model (cột nhỏ dưới tên model). Để trống = dùng model mặc định.', 'Model ID. Leave empty to use the default model.')}>
+            <input className="input" placeholder="nemotron-ultra" value={s.studio_model ?? ''} onChange={(e) => set('studio_model', e.target.value)} />
           </Field>
           <Field label={tr('Giới hạn tin nhắn / phút', 'Messages / minute limit')}>
             <input type="number" className="input" value={s.chat_rate_per_minute} onChange={(e) => set('chat_rate_per_minute', e.target.value)} />

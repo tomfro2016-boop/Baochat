@@ -35,7 +35,7 @@ export const POST = handler(async (req) => {
   if (!user.isAdmin && tk.token_balance <= 0) {
     throw new ApiError(402, 'Bạn đã hết token. Vui lòng chờ đến lần reset tiếp theo.', { code: 'OUT_OF_TOKENS', resetAt: tk.token_reset_at });
   }
-  const models = orderModels(await listAvailableModels(), b.modelId ?? s.default_model, false);
+  const models = orderModels(await listAvailableModels(), b.modelId ?? (s.studio_model || s.default_model), false);
   if (!models.length) throw new ApiError(503, 'Chưa có AI provider nào được cấu hình.', { code: 'NO_MODEL' });
 
   let base: any = null;
@@ -56,9 +56,9 @@ export const POST = handler(async (req) => {
 
   const msgs = buildStudioMessages(b.kind, b.prompt, { framework: b.framework ?? base?.framework, basePayload: base, uiLang: user.ui_lang });
   const estIn = estimateTokens(msgs.map((m) => m.content).join('\n'));
-  const maxOut = user.isAdmin ? 8192 : Math.max(512, Math.min(8192, Math.floor(tk.token_balance - estIn)));
+  const maxOut = user.isAdmin ? 16384 : Math.max(512, Math.min(16384, Math.floor(tk.token_balance - estIn)));
 
-  const { text, usage, model } = await completeWithFallback(models, msgs, { maxTokens: maxOut, temperature: 0.6, signal: req.signal });
+  const { text, usage, model } = await completeWithFallback(models, msgs, { maxTokens: maxOut, temperature: 0.6, signal: req.signal, totalMs: 170_000 });
   const total = ((usage.input || estIn) + (usage.output || estimateTokens(text))) * model.multiplier;
   // Luôn tính token cho lần gọi AI, kể cả khi kết quả không dùng được
   const balance = await chargeTokens(user, total, { reason: 'studio', model: model.id });

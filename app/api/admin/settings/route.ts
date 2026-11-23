@@ -16,6 +16,7 @@ const patch = z.object({
   token_grant_max: z.number().int().min(0).max(1_000_000_000_000).optional(),
   registration_open: z.boolean().optional(),
   default_model: z.string().max(80).optional(),
+  studio_model: z.string().max(80).optional(),
   chat_rate_per_minute: z.number().int().min(1).max(600).optional(),
   max_upload_mb: z.number().int().min(1).max(25).optional(),
 });

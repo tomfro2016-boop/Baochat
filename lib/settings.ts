@@ -7,6 +7,7 @@ export type Settings = {
   token_grant_max: number;
   registration_open: boolean;
   default_model: string;
+  studio_model: string; // model dùng riêng cho AI Studio (trống = dùng model mặc định)
   chat_rate_per_minute: number;
   max_upload_mb: number;
 };
@@ -18,6 +19,7 @@ const DEFAULTS: Settings = {
   token_grant_max: 1_000_000_000,
   registration_open: true,
   default_model: 'gpt-4o-mini',
+  studio_model: '',
   chat_rate_per_minute: 20,
   max_upload_mb: 10,
 };

@@ -97,6 +97,7 @@ function makeSignal(parent: AbortSignal | undefined, headerMs = 40_000, totalMs 
       if (timer) clearTimeout(timer);
       timer = undefined;
       parent?.removeEventListener('abort', onParent);
+      try { ctl.abort(); } catch {} // đóng kết nối nếu ta dừng sớm (chống lặp / người dùng bấm dừng)
     },
   };
 }
@@ -128,7 +129,7 @@ function toOpenAIMessages(msgs: ChatMsg[]) {
 
 async function* streamOpenAI(model: ModelRow, msgs: ChatMsg[], opts: CallOpts): AsyncGenerator<StreamEvent> {
   const key = process.env[model.api_key_env]!;
-  const sig = makeSignal(opts.signal);
+  const sig = makeSignal(opts.signal, 40_000, opts.totalMs ?? 120_000);
   try {
   const res = await fetch(`${model.base_url.replace(/\/+$/, '')}/chat/completions`, {
     method: 'POST',
@@ -140,6 +141,7 @@ async function* streamOpenAI(model: ModelRow, msgs: ChatMsg[], opts: CallOpts): 
       stream_options: { include_usage: true },
       max_tokens: opts.maxTokens,
       temperature: opts.temperature ?? 0.7,
+      ...(model.base_url.includes('openrouter.ai') ? { frequency_penalty: 0.4, presence_penalty: 0.2 } : {}),
     }),
     signal: sig.signal,
   });
@@ -189,7 +191,7 @@ function toAnthropic(msgs: ChatMsg[]) {
 async function* streamAnthropic(model: ModelRow, msgs: ChatMsg[], opts: CallOpts): AsyncGenerator<StreamEvent> {
   const key = process.env[model.api_key_env]!;
   const { system, messages } = toAnthropic(msgs);
-  const sig = makeSignal(opts.signal);
+  const sig = makeSignal(opts.signal, 40_000, opts.totalMs ?? 120_000);
   try {
   const res = await fetch(`${model.base_url.replace(/\/+$/, '')}/v1/messages`, {
     method: 'POST',
@@ -227,7 +229,7 @@ async function* streamAnthropic(model: ModelRow, msgs: ChatMsg[], opts: CallOpts
 }
 
 // ---------------------------------------------------------------- Public API
-export type CallOpts = { maxTokens: number; temperature?: number; signal?: AbortSignal };
+export type CallOpts = { maxTokens: number; temperature?: number; signal?: AbortSignal; totalMs?: number };
 
 /**
  * Stream với fallback: thử lần lượt các model. Chỉ chuyển sang model kế tiếp khi lỗi xảy ra

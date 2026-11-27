@@ -31,7 +31,7 @@ function ResetForm() {
   }
 
   return (
-    <AuthShell title={tr('Đặt mật khẩu mới', 'Set a new password')} footer={<Link className="text-accent hover:underline" href="/login">{tr('Đến trang đăng nhập', 'Go to sign in')}</Link>}>
+    <AuthShell title={tr('Đặt mật khẩu mới', 'Set a new password')} footer={<Link className="text-ink underline decoration-primary underline-offset-4 hover:text-accent" href="/login">{tr('Đến trang đăng nhập', 'Go to sign in')}</Link>}>
       <ErrorNote>{error || (!token ? tr('Liên kết không hợp lệ.', 'Invalid link.') : '')}</ErrorNote>
       {done ? (
         <OkNote>{tr('Đã đặt lại mật khẩu. Bạn có thể đăng nhập ngay.', 'Password updated. You can sign in now.')}</OkNote>

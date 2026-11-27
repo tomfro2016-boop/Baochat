@@ -39,7 +39,7 @@ export default function RegisterPage() {
       footer={
         <>
           {tr('Đã có tài khoản?', 'Already have an account?')}{' '}
-          <Link className="text-accent hover:underline" href="/login">
+          <Link className="text-ink underline decoration-primary underline-offset-4 hover:text-accent" href="/login">
             {tr('Đăng nhập', 'Sign in')}
           </Link>
         </>

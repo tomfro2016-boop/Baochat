@@ -7,21 +7,13 @@ import { fmtCountdown } from '@/lib/client/util';
 
 export function Logo({ size = 32, withText = true }: { size?: number; withText?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-2.5">
-      <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden>
-        <defs>
-          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="rgb(var(--accent))" />
-            <stop offset="1" stopColor="rgb(var(--primary))" />
-          </linearGradient>
-        </defs>
-        <rect width="64" height="64" rx="16" fill="rgb(var(--surface2))" />
-        <path d="M32 12c11 0 20 7.6 20 17s-9 17-20 17c-2.4 0-4.7-.4-6.8-1L15 50l3.2-8.6C14.6 38.3 12 34 12 29c0-9.4 9-17 20-17z" fill="url(#lg)" />
-        <circle cx="24" cy="29" r="2.6" fill="rgb(var(--bg))" />
-        <circle cx="32" cy="29" r="2.6" fill="rgb(var(--bg))" />
-        <circle cx="40" cy="29" r="2.6" fill="rgb(var(--bg))" />
+    <span className="inline-flex items-center gap-2">
+      <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
+        <rect width="32" height="32" rx="7" fill="rgb(var(--primary))" />
+        <path d="M10 10.5l6 5.5-6 5.5" fill="none" stroke="rgb(var(--on-primary))" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="18" y="20" width="5" height="2.4" rx="0.6" fill="rgb(var(--on-primary))" />
       </svg>
-      {withText && <span className="text-lg font-semibold tracking-tight">Baochat</span>}
+      {withText && <span className="text-base font-medium">Baochat</span>}
     </span>
   );
 }
@@ -33,11 +25,11 @@ export function Spinner({ className = '' }: { className?: string }) {
 export function Avatar({ name, url, size = 36 }: { name: string; url?: string | null; size?: number }) {
   if (url) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={url} alt={name} width={size} height={size} className="rounded-full object-cover" style={{ width: size, height: size }} />;
+    return <img src={url} alt={name} width={size} height={size} className="rounded-md object-cover" style={{ width: size, height: size }} />;
   }
   return (
     <span
-      className="inline-flex items-center justify-center rounded-full bg-primary font-semibold text-white"
+      className="inline-flex items-center justify-center rounded-md bg-surface2 font-medium text-ink"
       style={{ width: size, height: size, fontSize: size * 0.4 }}
     >
       {(name || '?').trim().charAt(0).toUpperCase()}
@@ -80,12 +72,12 @@ export function Countdown({ resetAt, serverNow, className = '' }: { resetAt: str
 
 export function ErrorNote({ children }: { children: React.ReactNode }) {
   if (!children) return null;
-  return <div className="rounded-xl border border-danger/40 bg-danger/10 px-3.5 py-2.5 text-sm text-danger">{children}</div>;
+  return <div className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">{children}</div>;
 }
 
 export function OkNote({ children }: { children: React.ReactNode }) {
   if (!children) return null;
-  return <div className="rounded-xl border border-ok/40 bg-ok/10 px-3.5 py-2.5 text-sm text-ok">{children}</div>;
+  return <div className="rounded-md border border-ok/40 bg-ok/10 px-3 py-2 text-sm text-ok">{children}</div>;
 }
 
 export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label?: string }) {
@@ -96,9 +88,9 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? 'bg-primary' : 'bg-surface2 border border-line'}`}
+      className={`relative h-5 w-9 shrink-0 rounded-full transition-colors duration-150 ${checked ? 'bg-primary' : 'bg-surface2 border border-line'}`}
     >
-      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${checked ? 'left-[22px]' : 'left-0.5'}`} />
+      <span className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-[rgb(var(--on-primary))] transition-transform duration-150 ${checked ? 'translate-x-4' : 'translate-x-0 !bg-muted'}`} />
     </button>
   );
 }
@@ -107,10 +99,10 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
 export function Page({ title, subtitle, actions, children, wide = false }: { title: string; subtitle?: string; actions?: React.ReactNode; children: React.ReactNode; wide?: boolean }) {
   return (
     <div className="h-full overflow-y-auto">
-      <div className={`mx-auto w-full px-4 py-6 sm:px-8 sm:py-8 ${wide ? 'max-w-6xl' : 'max-w-4xl'}`}>
+      <div className={`mx-auto w-full px-4 py-8 sm:px-8 sm:py-10 ${wide ? 'max-w-6xl' : 'max-w-4xl'}`}>
         <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+            <h1 className="text-xl font-medium">{title}</h1>
             {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
           </div>
           {actions}
@@ -123,8 +115,8 @@ export function Page({ title, subtitle, actions, children, wide = false }: { tit
 
 export function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="card mb-5 p-5">
-      <h2 className="text-base font-semibold">{title}</h2>
+    <section className="card mb-4 p-6">
+      <h2 className="text-sm font-medium">{title}</h2>
       {hint && <p className="mt-0.5 text-sm text-muted">{hint}</p>}
       <div className="mt-4">{children}</div>
     </section>
@@ -144,8 +136,8 @@ export function Field({ label, children, hint }: { label: string; children: Reac
 export function Stat({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
   return (
     <div className="card p-4">
-      <p className="text-xs font-medium text-muted">{label}</p>
-      <p className="mt-1.5 text-2xl font-semibold tabular-nums">{value}</p>
+      <p className="text-xs text-muted">{label}</p>
+      <p className="mt-2 font-mono text-2xl tabular-nums">{value}</p>
       {sub && <p className="mt-0.5 text-xs text-muted">{sub}</p>}
     </div>
   );

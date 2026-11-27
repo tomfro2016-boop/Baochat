@@ -33,13 +33,13 @@ function Verify() {
   }, [token]);
 
   return (
-    <AuthShell title={tr('Xác minh email', 'Verify email')} footer={<Link className="text-accent hover:underline" href="/">{tr('Về trang chính', 'Go to app')}</Link>}>
+    <AuthShell title={tr('Xác minh email', 'Verify email')} footer={<Link className="text-ink underline decoration-primary underline-offset-4 hover:text-accent" href="/">{tr('Về trang chính', 'Go to app')}</Link>}>
       {state === 'loading' && (
         <div className="flex items-center gap-2 text-muted">
           <Spinner /> {tr('Đang xác minh…', 'Verifying…')}
         </div>
       )}
-      {state === 'ok' && <OkNote>{tr('Email đã được xác minh. Cảm ơn bạn!', 'Your email is verified. Thank you!')}</OkNote>}
+      {state === 'ok' && <OkNote>{tr('Email đã được xác minh', 'Your email is verified')}</OkNote>}
       {state === 'error' && <ErrorNote>{error}</ErrorNote>}
     </AuthShell>
   );

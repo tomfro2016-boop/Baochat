@@ -10,20 +10,26 @@ import {
   Check,
   ChevronDown,
   Copy,
+  Cpu,
   FileText,
   Globe,
   Megaphone,
+  MessageCircle,
   Paperclip,
   Pencil,
   RefreshCw,
+  Scale,
+  Smile,
   Square,
   ThumbsDown,
   ThumbsUp,
   Wand2,
   X,
+  Zap,
+  type LucideIcon,
 } from 'lucide-react';
 import Markdown from './Markdown';
-import { Countdown, ErrorNote, Logo, Spinner } from './ui';
+import { Countdown, ErrorNote, Spinner } from './ui';
 import { useApp, type Mode } from './Providers';
 import { api, ApiErr, streamChat, type SseEvent } from '@/lib/client/api';
 import { fmtNum } from '@/lib/client/util';
@@ -43,11 +49,11 @@ type Msg = {
   k?: string; // khóa React ổn định (id tạm -> id thật không làm bong bóng nháy lại)
 };
 
-const MODES: { id: Mode; vi: string; en: string; emoji: string }[] = [
-  { id: 'serious', vi: 'Nghiêm túc', en: 'Serious', emoji: '🎯' },
-  { id: 'casual', vi: 'Bình thường', en: 'Casual', emoji: '💬' },
-  { id: 'funny', vi: 'Hài hước', en: 'Funny', emoji: '😄' },
-  { id: 'playful', vi: 'Cợt nhả', en: 'Playful', emoji: '😜' },
+const MODES: { id: Mode; vi: string; en: string; icon: LucideIcon }[] = [
+  { id: 'serious', vi: 'Nghiêm túc', en: 'Serious', icon: Scale },
+  { id: 'casual', vi: 'Bình thường', en: 'Casual', icon: MessageCircle },
+  { id: 'funny', vi: 'Hài hước', en: 'Funny', icon: Smile },
+  { id: 'playful', vi: 'Cợt nhả', en: 'Playful', icon: Zap },
 ];
 
 const tmpId = () => 'tmp-' + Math.random().toString(36).slice(2);
@@ -58,9 +64,9 @@ function AttachmentChip({ a, onRemove }: { a: Attachment; onRemove?: () => void 
     <span className="chip max-w-[14rem] !text-ink">
       {isImg(a.mime) ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={`/api/files/${a.id}`} alt="" className="h-5 w-5 rounded object-cover" />
+        <img src={`/api/files/${a.id}`} alt="" className="h-5 w-5 rounded-sm object-cover" />
       ) : (
-        <FileText size={13} className="shrink-0 text-accent" />
+        <FileText size={13} strokeWidth={1.5} className="shrink-0 text-muted" />
       )}
       <span className="truncate">{a.name}</span>
       {onRemove && (
@@ -96,10 +102,10 @@ function Dropdown<T extends string>({
   const cur = options.find((o) => o.id === value);
   return (
     <div ref={ref} className="relative">
-      <button type="button" className="btn-ghost !px-3 !py-1.5 text-xs" onClick={() => setOpen((o) => !o)}>
+      <button type="button" className="btn-ghost !h-8 !px-3 text-xs" onClick={() => setOpen((o) => !o)}>
         {icon}
         <span className="max-w-[9rem] truncate">{cur?.label ?? '—'}</span>
-        <ChevronDown size={14} className="text-muted" />
+        <ChevronDown size={14} strokeWidth={1.5} className="text-muted" />
       </button>
       <AnimatePresence>
         {open && (
@@ -107,14 +113,14 @@ function Dropdown<T extends string>({
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.12 }}
-            className="absolute left-0 top-full z-30 mt-1.5 max-h-72 min-w-[12rem] overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-xl"
+            transition={{ duration: 0.14, ease: [0.2, 0, 0, 1] }}
+            className="absolute left-0 top-full z-30 mt-1.5 max-h-72 min-w-[12rem] overflow-y-auto rounded-lg border border-line bg-surface p-1"
           >
             {options.map((o) => (
               <li key={o.id}>
                 <button
                   type="button"
-                  className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-surface2 ${o.id === value ? 'text-accent' : ''}`}
+                  className={`flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-surface2 ${o.id === value ? 'text-primary' : ''}`}
                   onClick={() => {
                     onChange(o.id);
                     setOpen(false);
@@ -139,10 +145,8 @@ function SourceList({ sources }: { sources: Source[] }) {
   const { tr } = useApp();
   if (!sources.length) return null;
   return (
-    <div className="mt-3 rounded-xl border border-line bg-surface2/50 p-3">
-      <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium text-muted">
-        <Globe size={12} /> {tr('Nguồn tham khảo', 'Sources')}
-      </p>
+    <div className="mt-4 border-t border-line pt-3">
+      <p className="mono-label mb-2">{tr('nguồn', 'sources')}</p>
       <ol className="space-y-1.5">
         {sources.map((s, i) => {
           let host = '';
@@ -151,7 +155,7 @@ function SourceList({ sources }: { sources: Source[] }) {
           } catch {}
           return (
             <li key={s.url + i} className="flex gap-2 text-sm">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-primary/15 text-[11px] text-accent">{i + 1}</span>
+              <span className="w-5 shrink-0 font-mono text-[11px] text-muted">{String(i + 1).padStart(2, '0')}</span>
               <a href={s.url} target="_blank" rel="noopener noreferrer nofollow" className="min-w-0 hover:text-accent">
                 <span className="block truncate">{s.title || host}</span>
                 <span className="block truncate text-[11px] text-muted">{host}</span>
@@ -457,10 +461,10 @@ export default function ChatView() {
   })();
 
   const suggestions = [
-    { icon: '✍️', t: tr('Viết một email xin nghỉ phép lịch sự', 'Write a polite leave-request email') },
-    { icon: '💻', t: tr('Giải thích async/await trong JavaScript kèm ví dụ', 'Explain async/await in JavaScript with examples') },
-    { icon: '🌐', t: tr('Tìm tin công nghệ mới nhất hôm nay', "Find today's latest tech news"), search: true },
-    { icon: '🧮', t: tr('Giải phương trình x² − 5x + 6 = 0 từng bước', 'Solve x² − 5x + 6 = 0 step by step') },
+    { t: tr('Viết một email xin nghỉ phép lịch sự', 'Write a polite leave-request email') },
+    { t: tr('Giải thích async/await trong JavaScript kèm ví dụ', 'Explain async/await in JavaScript with examples') },
+    { t: tr('Tìm tin công nghệ mới nhất hôm nay', "Find today's latest tech news"), search: true },
+    { t: tr('Giải phương trình x² − 5x + 6 = 0 từng bước', 'Solve x² − 5x + 6 = 0 step by step') },
   ];
 
   const empty = msgs.length === 0 && !loadingConv;
@@ -484,16 +488,16 @@ export default function ChatView() {
       }}
     >
       {/* Thanh công cụ trên cùng */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2 sm:px-5">
+      <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2.5 sm:px-5">
         <Dropdown
           value={modelId}
           onChange={setModelId}
-          icon={<span className="text-accent">◆</span>}
+          icon={<Cpu size={14} strokeWidth={1.5} className="text-muted" />}
           options={[{ id: 'auto', label: tr('Tự động', 'Auto') }, ...models.map((m) => ({ id: m.id, label: m.label, hint: m.vision ? 'Vision' : undefined }))]}
         />
-        <Dropdown value={mode} onChange={setMode} icon={<span>{MODES.find((m) => m.id === mode)?.emoji}</span>} options={MODES.map((m) => ({ id: m.id, label: tr(m.vi, m.en) }))} />
-        <div className="ml-auto hidden items-center gap-2 text-xs text-muted sm:flex">
-          {tokens?.unlimited ? <span className="chip">∞ token</span> : <span className="chip">{fmtNum(tokens?.balance)} token</span>}
+        <Dropdown value={mode} onChange={setMode} icon={(() => { const I = MODES.find((m) => m.id === mode)?.icon ?? MessageCircle; return <I size={14} strokeWidth={1.5} className="text-muted" />; })()} options={MODES.map((m) => ({ id: m.id, label: tr(m.vi, m.en) }))} />
+        <div className="ml-auto hidden items-center text-xs text-muted sm:flex">
+          <span className="font-mono tabular-nums">{tokens?.unlimited ? '∞' : fmtNum(tokens?.balance)} token</span>
         </div>
       </div>
 
@@ -507,18 +511,15 @@ export default function ChatView() {
           )}
 
           {empty && (
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="flex flex-col items-center pb-6 pt-8 text-center sm:pt-16">
-              <Logo size={56} withText={false} />
-              <h1 className="mt-5 text-2xl font-semibold tracking-tight sm:text-3xl">
-                {tr('Xin chào', 'Hello')}, <span className="text-accent">{me?.user.displayName}</span>
-              </h1>
-              <p className="mt-2 text-muted">{tr('Bạn muốn Baochat giúp gì hôm nay?', 'What can Baochat help you with today?')}</p>
+            <div className="animate-rise pb-6 pt-6 sm:pt-16">
+              <p className="mono-label">{me?.user.displayName}</p>
+              <h1 className="mt-2 text-xl font-medium">{tr('Cuộc trò chuyện mới', 'New conversation')}</h1>
 
               {me?.announcements?.length ? (
-                <div className="mt-6 w-full max-w-xl space-y-2 text-left">
+                <div className="mt-6 w-full space-y-2">
                   {me.announcements.map((a) => (
-                    <div key={a.id} className="flex gap-3 rounded-xl border border-primary/30 bg-primary/10 p-3 text-sm">
-                      <Megaphone size={16} className="mt-0.5 shrink-0 text-accent" />
+                    <div key={a.id} className="flex gap-3 border-l-2 border-primary bg-surface px-4 py-3 text-sm">
+                      <Megaphone size={16} strokeWidth={1.5} className="mt-0.5 shrink-0 text-primary" />
                       <div>
                         <p className="font-medium">{a.title}</p>
                         <p className="text-muted">{a.body}</p>
@@ -528,28 +529,29 @@ export default function ChatView() {
                 </div>
               ) : null}
 
-              <div className="mt-8 grid w-full max-w-2xl gap-3 sm:grid-cols-2">
-                {suggestions.map((s) => (
-                  <button
-                    key={s.t}
-                    onClick={() => {
-                      setInput(s.t);
-                      if (s.search && me?.features.search) setSearch(true);
-                      taRef.current?.focus();
-                    }}
-                    className="card group flex items-start gap-3 p-4 text-left text-sm transition-all hover:border-primary/40 hover:bg-surface2"
-                  >
-                    <span className="text-lg">{s.icon}</span>
-                    <span className="text-muted transition-colors group-hover:text-ink">{s.t}</span>
-                  </button>
+              <ol className="mt-10 divide-y divide-line border-y border-line">
+                {suggestions.map((s, n) => (
+                  <li key={s.t}>
+                    <button
+                      onClick={() => {
+                        setInput(s.t);
+                        if (s.search && me?.features.search) setSearch(true);
+                        taRef.current?.focus();
+                      }}
+                      className="group flex w-full items-baseline gap-4 py-3 text-left text-sm transition-colors duration-150"
+                    >
+                      <span className="font-mono text-xs text-muted">{String(n + 1).padStart(2, '0')}</span>
+                      <span className="text-muted transition-colors duration-150 group-hover:text-ink">{s.t}</span>
+                    </button>
+                  </li>
                 ))}
-              </div>
-            </motion.div>
+              </ol>
+            </div>
           )}
 
-          <div className="space-y-6">
+          <div className="space-y-8">
             {msgs.map((m, i) => (
-              <motion.div key={m.k ?? m.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}>
+              <motion.div key={m.k ?? m.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, ease: [0.2, 0, 0, 1] }}>
                 {m.role === 'user' ? (
                   <div className="flex flex-col items-end gap-1.5">
                     {m.attachments.length > 0 && (
@@ -558,7 +560,7 @@ export default function ChatView() {
                           isImg(a.mime) ? (
                             <a key={a.id} href={`/api/files/${a.id}`} target="_blank" rel="noopener noreferrer">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={`/api/files/${a.id}`} alt={a.name} className="max-h-40 rounded-xl border border-line object-cover" />
+                              <img src={`/api/files/${a.id}`} alt={a.name} className="max-h-40 rounded-md border border-line object-cover" />
                             </a>
                           ) : (
                             <AttachmentChip key={a.id} a={a} />
@@ -590,7 +592,7 @@ export default function ChatView() {
                     ) : (
                       m.content && (
                         <div className="group relative max-w-[85%]">
-                          <div className="whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-surface2 px-4 py-2.5 text-[15px] leading-7 text-ink">{m.content}</div>
+                          <div className="whitespace-pre-wrap break-words rounded-md border border-line bg-surface px-4 py-3 text-[15px] leading-7 text-ink">{m.content}</div>
                           {!busy && !m.id.startsWith('tmp-') && (
                             <button
                               className="icon-btn absolute -left-10 top-1/2 hidden h-8 w-8 -translate-y-1/2 group-hover:inline-flex max-lg:inline-flex max-lg:!-left-9"
@@ -598,7 +600,7 @@ export default function ChatView() {
                               title={tr('Chỉnh sửa', 'Edit')}
                               onClick={() => setEditing({ id: m.id, text: m.content })}
                             >
-                              <Pencil size={14} />
+                              <Pencil size={14} strokeWidth={1.5} />
                             </button>
                           )}
                         </div>
@@ -606,45 +608,41 @@ export default function ChatView() {
                     )}
                   </div>
                 ) : (
-                  <div className="flex gap-3">
-                    <div className="mt-0.5 shrink-0">
-                      <Logo size={30} withText={false} />
-                    </div>
-                    <div className="min-w-0 flex-1">
+                  <div className="min-w-0">
+                    <p className="mono-label mb-2">baochat</p>
+                    <div className="min-w-0">
                       {m.content ? (
                         <Markdown>{m.content}</Markdown>
                       ) : m.streaming ? (
-                        <div className="flex h-8 items-center gap-1.5">
-                          {[0, 1, 2].map((d) => (
-                            <span key={d} className="typing-dot" style={{ animationDelay: `${d * 0.15}s` }} />
-                          ))}
-                          <span className="ml-2 text-xs text-muted">{search ? tr('Đang tìm kiếm & suy nghĩ…', 'Searching & thinking…') : tr('Đang xử lý…', 'Thinking…')}</span>
+                        <div className="flex h-7 items-center gap-3 text-muted">
+                          <span className="cursor-block" />
+                          <span className="font-mono text-xs">{search ? tr('đang tìm và suy nghĩ', 'searching and thinking') : tr('đang xử lý', 'thinking')}</span>
                         </div>
                       ) : null}
-                      {m.streaming && m.content && <span className="ml-0.5 inline-block h-4 w-[3px] translate-y-0.5 animate-pulse bg-accent" />}
+                      {m.streaming && m.content && <span className="cursor-block ml-1" />}
                       {m.error && <div className="mt-2"><ErrorNote>{m.error}</ErrorNote></div>}
                       <SourceList sources={m.sources} />
                       {!m.streaming && m.content && (
                         <div className="mt-2 flex items-center gap-0.5 text-muted">
                           <button className="icon-btn !h-8 !w-8" onClick={() => copy(m)} title={tr('Sao chép', 'Copy')} aria-label={tr('Sao chép', 'Copy')}>
-                            {copied === m.id ? <Check size={15} className="text-ok" /> : <Copy size={15} />}
+                            {copied === m.id ? <Check size={15} strokeWidth={1.5} className="text-ok" /> : <Copy size={15} strokeWidth={1.5} />}
                           </button>
                           {!m.id.startsWith('tmp-') && (
                             <>
                               <button className={`icon-btn !h-8 !w-8 ${m.rating === 1 ? '!text-ok' : ''}`} onClick={() => rate(m, 1)} title={tr('Câu trả lời tốt', 'Good answer')} aria-label="Like">
-                                <ThumbsUp size={15} />
+                                <ThumbsUp size={15} strokeWidth={1.5} />
                               </button>
                               <button className={`icon-btn !h-8 !w-8 ${m.rating === -1 ? '!text-danger' : ''}`} onClick={() => rate(m, -1)} title={tr('Câu trả lời chưa tốt', 'Bad answer')} aria-label="Dislike">
-                                <ThumbsDown size={15} />
+                                <ThumbsDown size={15} strokeWidth={1.5} />
                               </button>
                             </>
                           )}
                           {i === lastAsstIdx && !busy && (
                             <button className="icon-btn !h-8 !w-8" onClick={() => run('regenerate')} disabled={outOfTokens} title={tr('Tạo lại', 'Regenerate')} aria-label={tr('Tạo lại', 'Regenerate')}>
-                              <RefreshCw size={15} />
+                              <RefreshCw size={15} strokeWidth={1.5} />
                             </button>
                           )}
-                          {m.model && <span className="ml-2 text-[11px]">{models.find((x) => x.id === m.model)?.label ?? m.model}</span>}
+                          {m.model && <span className="ml-2 font-mono text-[11px]">{models.find((x) => x.id === m.model)?.label ?? m.model}</span>}
                         </div>
                       )}
                     </div>
@@ -657,16 +655,16 @@ export default function ChatView() {
       </div>
 
       {!atBottom && msgs.length > 0 && (
-        <button onClick={scrollDown} className="absolute bottom-40 left-1/2 z-10 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border border-line bg-surface shadow-lg transition-colors hover:bg-surface2" aria-label="Scroll down">
-          <ArrowDown size={16} />
+        <button onClick={scrollDown} className="absolute bottom-40 left-1/2 z-10 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-md border border-line bg-surface transition-colors hover:bg-surface2" aria-label="Scroll down">
+          <ArrowDown size={16} strokeWidth={1.5} />
         </button>
       )}
 
       {/* Ô nhập liệu */}
-      <div className="border-t border-line bg-bg/60 px-3 pb-3 pt-3 backdrop-blur sm:px-6">
+      <div className="border-t border-line bg-bg px-3 pb-3 pt-3 sm:px-6">
         <div className="mx-auto w-full max-w-3xl space-y-2">
           {outOfTokens && tokens && (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-danger/40 bg-danger/10 px-3.5 py-2.5 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm">
               <span className="text-danger">{tr('Bạn đã hết token.', "You're out of tokens.")}</span>
               <span className="text-muted">
                 {tr('Reset sau', 'Resets in')} <Countdown resetAt={tokens.resetAt} serverNow={tokens.serverNow} className="font-medium text-ink" />
@@ -674,7 +672,7 @@ export default function ChatView() {
             </div>
           )}
           {!busy && !loadingConv && convId && msgs.length > 0 && msgs[msgs.length - 1].role === 'user' && (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-danger/40 bg-danger/10 px-3.5 py-2.5 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm">
               <span className="text-danger">{tr('Câu hỏi này chưa có câu trả lời (AI không phản hồi).', 'This message has no reply (the AI did not respond).')}</span>
               <button className="btn-primary !py-1.5 text-xs" onClick={() => run('regenerate')} disabled={outOfTokens}>
                 {tr('Thử lại', 'Retry')}
@@ -682,9 +680,9 @@ export default function ChatView() {
             </div>
           )}
           {error && <ErrorNote>{error}</ErrorNote>}
-          {notice && !error && <div className="rounded-xl border border-line bg-surface2 px-3.5 py-2 text-xs text-muted">{notice}</div>}
+          {notice && !error && <div className="rounded-md border border-line bg-surface2 px-3 py-2 text-xs text-muted">{notice}</div>}
 
-          <div className="rounded-2xl border border-line bg-surface shadow-lg transition-colors focus-within:border-primary/70 focus-within:ring-2 focus-within:ring-primary/20">
+          <div className="rounded-lg border border-line bg-surface transition-colors duration-150 focus-within:border-primary">
             {(pending.length > 0 || uploading > 0) && (
               <div className="flex flex-wrap gap-1.5 px-3 pt-3">
                 {pending.map((a) => (
@@ -710,7 +708,7 @@ export default function ChatView() {
                   uploadFiles(files);
                 }
               }}
-              placeholder={outOfTokens ? tr('Đang chờ reset token…', 'Waiting for token reset…') : tr('Nhắn tin cho Baochat…  (Enter để gửi, Shift+Enter xuống dòng)', 'Message Baochat…  (Enter to send, Shift+Enter for new line)')}
+              placeholder={outOfTokens ? tr('Đang chờ reset token…', 'Waiting for token reset…') : tr('Nhắn cho Baochat. Enter để gửi, Shift+Enter xuống dòng', 'Message Baochat. Enter to send, Shift+Enter for new line')}
               disabled={outOfTokens}
               maxLength={30000}
               className="block max-h-[220px] w-full resize-none bg-transparent px-4 pb-1 pt-3.5 text-[15px] leading-6 outline-none placeholder:text-muted disabled:opacity-60"
@@ -728,10 +726,10 @@ export default function ChatView() {
                 }}
               />
               <button className="icon-btn" onClick={() => fileRef.current?.click()} title={tr('Đính kèm tệp / hình ảnh', 'Attach files / images')} aria-label={tr('Đính kèm', 'Attach')}>
-                <Paperclip size={18} />
+                <Paperclip size={16} strokeWidth={1.5} />
               </button>
               <button
-                className={`inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-medium transition-colors ${search ? 'bg-primary/20 text-accent' : 'text-muted hover:bg-surface2 hover:text-ink'}`}
+                className={`inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs transition-colors duration-150 ${search ? 'bg-surface2 text-primary' : 'text-muted hover:bg-surface2 hover:text-ink'}`}
                 onClick={() => {
                   if (!me?.features.search) {
                     setNotice(tr('Tìm kiếm Internet chưa được cấu hình trên máy chủ (cần TAVILY_API_KEY hoặc BRAVE_API_KEY).', 'Web search is not configured on the server (needs TAVILY_API_KEY or BRAVE_API_KEY).'));
@@ -742,39 +740,39 @@ export default function ChatView() {
                 aria-pressed={search}
                 title={tr('Bật/tắt tìm kiếm Internet', 'Toggle web search')}
               >
-                <Globe size={16} /> Search
+                <Globe size={15} strokeWidth={1.5} /> {tr('Tìm web', 'Web')}
               </button>
-              <Link href="/studio" className="inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-medium text-muted transition-colors hover:bg-surface2 hover:text-ink">
-                <Wand2 size={16} /> AI Studio
+              <Link href="/studio" className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs text-muted transition-colors duration-150 hover:bg-surface2 hover:text-ink">
+                <Wand2 size={15} strokeWidth={1.5} /> Studio
               </Link>
               <div className="ml-auto">
                 {busy ? (
-                  <button className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-surface2 text-ink transition-colors hover:bg-line" onClick={stop} aria-label={tr('Dừng', 'Stop')} title={tr('Dừng', 'Stop')}>
-                    <Square size={15} fill="currentColor" />
+                  <button className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-surface2 text-ink transition-colors hover:bg-line" onClick={stop} aria-label={tr('Dừng', 'Stop')} title={tr('Dừng', 'Stop')}>
+                    <Square size={13} fill="currentColor" />
                   </button>
                 ) : (
                   <button
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white transition-all hover:shadow-glow hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:shadow-none"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary text-[rgb(var(--on-primary))] transition-colors duration-150 hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
                     onClick={send}
                     disabled={(!input.trim() && !pending.length) || uploading > 0 || outOfTokens}
                     aria-label={tr('Gửi', 'Send')}
                     title={tr('Gửi', 'Send')}
                   >
-                    <ArrowUp size={18} />
+                    <ArrowUp size={16} strokeWidth={2} />
                   </button>
                 )}
               </div>
             </div>
           </div>
-          <p className="text-center text-[11px] text-muted">{tr('Baochat có thể mắc lỗi. Hãy kiểm tra thông tin quan trọng.', 'Baochat can make mistakes. Check important information.')}</p>
+          <p className="text-center font-mono text-[11px] text-muted">{tr('Baochat có thể sai, hãy kiểm tra thông tin quan trọng', 'Baochat can be wrong, check important information')}</p>
         </div>
       </div>
 
       <AnimatePresence>
         {dragOver && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-bg/80 backdrop-blur-sm">
-            <div className="rounded-2xl border-2 border-dashed border-primary px-10 py-8 text-center">
-              <Paperclip className="mx-auto mb-2 text-accent" />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-bg/90">
+            <div className="rounded-lg border border-dashed border-primary px-10 py-8 text-center">
+              <Paperclip strokeWidth={1.5} className="mx-auto mb-2 text-primary" />
               <p className="font-medium">{tr('Thả tệp để đính kèm', 'Drop files to attach')}</p>
             </div>
           </motion.div>

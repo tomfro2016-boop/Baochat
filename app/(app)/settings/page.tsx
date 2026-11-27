@@ -1,12 +1,13 @@
 'use client';
 
+import { DEFAULT_ACCENT } from '@/lib/client/util';
 import { useRef, useState } from 'react';
 import { Camera, Check, Moon, Sun, Trash2 } from 'lucide-react';
 import { Avatar, ErrorNote, Field, OkNote, Page, Section, Spinner } from '@/components/ui';
 import { useApp, type Mode } from '@/components/Providers';
 import { api } from '@/lib/client/api';
 
-const ACCENTS = ['#7867FF', '#3B82F6', '#06B6D4', '#10B981', '#F59E0B', '#F43F5E', '#EC4899', '#8B5CF6'];
+const ACCENTS = ['#F0A528', '#E8643C', '#D9534F', '#3B82F6', '#06B6D4', '#10B981', '#8B5CF6', '#A8A29E'];
 const MODES: { id: Mode; vi: string; en: string }[] = [
   { id: 'serious', vi: 'Nghiêm túc', en: 'Serious' },
   { id: 'casual', vi: 'Bình thường', en: 'Casual' },
@@ -179,7 +180,7 @@ export default function SettingsPage() {
           <Field label={tr('Ngôn ngữ giao diện', 'Interface language')}>
             <div className="flex gap-2">
               {(['vi', 'en'] as const).map((l) => (
-                <button key={l} onClick={() => setLang(l)} className={`flex-1 rounded-xl border px-3 py-2 text-sm transition-colors ${lang === l ? 'border-primary bg-primary/15' : 'border-line text-muted hover:bg-surface2'}`}>
+                <button key={l} onClick={() => setLang(l)} className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors ${lang === l ? 'border-primary bg-surface2' : 'border-line text-muted hover:bg-surface2'}`}>
                   {l === 'vi' ? 'Tiếng Việt' : 'English'}
                 </button>
               ))}
@@ -188,7 +189,7 @@ export default function SettingsPage() {
           <Field label={tr('Chế độ màu', 'Theme')}>
             <div className="flex gap-2">
               {(['dark', 'light'] as const).map((t) => (
-                <button key={t} onClick={() => setTheme(t)} className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors ${theme === t ? 'border-primary bg-primary/15' : 'border-line text-muted hover:bg-surface2'}`}>
+                <button key={t} onClick={() => setTheme(t)} className={`flex flex-1 items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors ${theme === t ? 'border-primary bg-surface2' : 'border-line text-muted hover:bg-surface2'}`}>
                   {t === 'dark' ? <Moon size={15} /> : <Sun size={15} />} {t === 'dark' ? 'Dark' : 'Light'}
                 </button>
               ))}
@@ -197,10 +198,10 @@ export default function SettingsPage() {
           <Field label={tr('Màu nhấn', 'Accent color')}>
             <div className="flex flex-wrap items-center gap-2">
               {ACCENTS.map((c) => (
-                <button key={c} onClick={() => setAccent(c)} aria-label={c} className={`h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 ${u.accent.toLowerCase() === c.toLowerCase() ? 'border-ink' : 'border-transparent'}`} style={{ background: c }} />
+                <button key={c} onClick={() => setAccent(c)} aria-label={c} className={`h-8 w-8 rounded-md border-2 transition-colors ${(u.accent.toUpperCase() === '#7867FF' ? DEFAULT_ACCENT : u.accent).toLowerCase() === c.toLowerCase() ? 'border-ink' : 'border-transparent'}`} style={{ background: c }} />
               ))}
-              <label className="relative h-8 w-8 cursor-pointer overflow-hidden rounded-full border border-line" title={tr('Tùy chọn màu', 'Custom color')}>
-                <span className="absolute inset-0" style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }} />
+              <label className="relative flex h-8 w-8 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-dashed border-line text-muted hover:border-primary" title={tr('Tùy chọn màu', 'Custom color')}>
+                <span className="font-mono text-xs">#</span>
                 <input type="color" value={u.accent} onChange={(e) => setAccent(e.target.value.toUpperCase())} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
               </label>
             </div>

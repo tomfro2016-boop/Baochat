@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
   -- tuỳ chọn giao diện / AI
   ui_lang            text NOT NULL DEFAULT 'vi',
   theme              text NOT NULL DEFAULT 'dark',
-  accent             text NOT NULL DEFAULT '#7867FF',
+  accent             text NOT NULL DEFAULT '#F0A528',
   default_mode       text NOT NULL DEFAULT 'casual' CHECK (default_mode IN ('serious','casual','funny','playful')),
   memory_enabled     boolean NOT NULL DEFAULT true,
   use_history        boolean NOT NULL DEFAULT true,

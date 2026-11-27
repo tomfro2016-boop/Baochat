@@ -29,7 +29,7 @@ function wrap(title: string, body: string, cta: string, link: string) {
     <h2 style="margin:0 0 12px;color:#A99CFF">Baochat</h2>
     <h3 style="margin:0 0 12px">${title}</h3>
     <p style="color:#9298AA;line-height:1.6">${body}</p>
-    <p style="margin:24px 0"><a href="${link}" style="background:#7867FF;color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px;display:inline-block">${cta}</a></p>
+    <p style="margin:24px 0"><a href="${link}" style="background:#F0A528;color:#181206;text-decoration:none;padding:12px 20px;border-radius:6px;display:inline-block">${cta}</a></p>
     <p style="color:#9298AA;font-size:12px;word-break:break-all">${link}</p>
   </div></div>`;
 }

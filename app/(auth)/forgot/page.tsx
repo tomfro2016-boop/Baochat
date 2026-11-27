@@ -31,7 +31,7 @@ export default function ForgotPage() {
     <AuthShell
       title={tr('Quên mật khẩu', 'Forgot password')}
       subtitle={tr('Nhập email để nhận liên kết đặt lại mật khẩu', 'Enter your email to receive a reset link')}
-      footer={<Link className="text-accent hover:underline" href="/login">{tr('← Quay lại đăng nhập', '← Back to sign in')}</Link>}
+      footer={<Link className="text-ink underline decoration-primary underline-offset-4 hover:text-accent" href="/login">{tr('← Quay lại đăng nhập', '← Back to sign in')}</Link>}
     >
       <ErrorNote>{error}</ErrorNote>
       {done ? (

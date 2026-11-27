@@ -44,12 +44,12 @@ function LoginForm() {
 
   return (
     <AuthShell
-      title={tr('Chào mừng trở lại', 'Welcome back')}
-      subtitle={tr('Đăng nhập để tiếp tục với Baochat', 'Sign in to continue with Baochat')}
+      title={tr('Đăng nhập', 'Sign in')}
+      subtitle={tr('Tiếp tục với tài khoản Baochat của bạn', 'Continue with your Baochat account')}
       footer={
         <>
           {tr('Chưa có tài khoản?', "Don't have an account?")}{' '}
-          <Link className="text-accent hover:underline" href="/register">
+          <Link className="text-ink underline decoration-primary underline-offset-4 hover:text-accent" href="/register">
             {tr('Đăng ký', 'Sign up')}
           </Link>
         </>
@@ -66,7 +66,7 @@ function LoginForm() {
         <div>
           <div className="flex items-center justify-between">
             <label className="label" htmlFor="pw">{tr('Mật khẩu', 'Password')}</label>
-            <Link href="/forgot" className="mb-1.5 text-xs text-accent hover:underline">
+            <Link href="/forgot" className="mb-1.5 text-xs text-ink underline decoration-primary underline-offset-4 hover:text-accent">
               {tr('Quên mật khẩu?', 'Forgot password?')}
             </Link>
           </div>

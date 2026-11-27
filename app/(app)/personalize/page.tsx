@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Brain, Check, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Brain, Check, Plus, Trash2 } from 'lucide-react';
 import { ErrorNote, Field, OkNote, Page, Section, Spinner, Toggle } from '@/components/ui';
 import { useApp, type Mode } from '@/components/Providers';
 import { api } from '@/lib/client/api';
@@ -205,7 +205,7 @@ export default function PersonalizePage() {
                 <button
                   key={p.id}
                   onClick={() => select(p)}
-                  className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm transition-colors ${selId === p.id ? 'border-primary bg-primary/15 text-ink' : 'border-line text-muted hover:bg-surface2 hover:text-ink'}`}
+                  className={`inline-flex items-center gap-2 rounded-md border px-3.5 py-2 text-sm transition-colors ${selId === p.id ? 'border-primary bg-surface2 text-ink' : 'border-line text-muted hover:bg-surface2 hover:text-ink'}`}
                 >
                   {p.is_active && <Check size={14} className="text-ok" />}
                   {p.name}
@@ -234,7 +234,7 @@ export default function PersonalizePage() {
                         key={s.id}
                         type="button"
                         onClick={() => set('style', s.id)}
-                        className={`rounded-xl border p-3 text-left transition-all ${draft.style === s.id ? 'border-primary bg-primary/10 shadow-glow' : 'border-line hover:bg-surface2'}`}
+                        className={`rounded-md border p-3 text-left transition-colors ${draft.style === s.id ? 'border-primary bg-surface2' : 'border-line hover:bg-surface2'}`}
                       >
                         <p className="text-sm font-medium">{tr(s.vi, s.en)}</p>
                         <p className="text-xs text-muted">{tr(s.descVi, s.descEn)}</p>
@@ -277,7 +277,7 @@ export default function PersonalizePage() {
                   </button>
                   {!profiles.find((p) => p.id === selId)?.is_active && (
                     <button className="btn-ghost" onClick={() => activate(selId)} disabled={dirty}>
-                      <Sparkles size={16} /> {tr('Dùng cấu hình này', 'Use this profile')}
+                      <Check size={16} strokeWidth={1.5} /> {tr('Dùng cấu hình này', 'Use this profile')}
                     </button>
                   )}
                   <button className="btn-danger ml-auto" onClick={remove} disabled={profiles.length <= 1}>
@@ -310,8 +310,8 @@ export default function PersonalizePage() {
 
             <div className="mt-6 border-t border-line pt-5">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="flex items-center gap-2 text-sm font-semibold">
-                  <Brain size={16} className="text-accent" /> {tr('Thông tin đã ghi nhớ', 'Saved memories')}
+                <h3 className="flex items-center gap-2 text-sm font-medium">
+                  <Brain size={16} strokeWidth={1.5} className="text-muted" /> {tr('Thông tin đã ghi nhớ', 'Saved memories')}
                 </h3>
                 {memories && memories.length > 0 && (
                   <button className="text-xs text-danger hover:underline" onClick={clearMemories}>
@@ -343,7 +343,7 @@ export default function PersonalizePage() {
               ) : (
                 <ul className="mt-4 space-y-2">
                   {memories.map((m) => (
-                    <li key={m.id} className="flex items-start gap-3 rounded-xl bg-surface2 px-3.5 py-2.5 text-sm">
+                    <li key={m.id} className="flex items-start gap-3 rounded-md bg-surface2 px-3 py-2 text-sm">
                       <span className="flex-1 break-words">{m.content}</span>
                       <span className="chip shrink-0 !py-0.5 text-[10px]">{m.source === 'auto' ? 'auto' : tr('thủ công', 'manual')}</span>
                       <button className="shrink-0 text-muted transition-colors hover:text-danger" onClick={() => delMemory(m.id)} aria-label={tr('Xóa', 'Delete')}>

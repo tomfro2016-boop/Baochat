@@ -72,6 +72,7 @@ function applyTheme(theme: string, accent: string) {
   const v = accentVars(accent, theme);
   el.style.setProperty('--primary', v.primary);
   el.style.setProperty('--accent', v.accent);
+  el.style.setProperty('--on-primary', v.onPrimary);
 }
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -79,7 +80,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [lang, setLangState] = useState<Lang>('vi');
   const [theme, setThemeState] = useState<'dark' | 'light'>('dark');
-  const [accent, setAccentState] = useState('#7867FF');
+  const [accent, setAccentState] = useState('#F0A528');
   const [convVersion, setConvVersion] = useState(0);
 
   // Khôi phục tuỳ chọn tạm thời (trang chưa đăng nhập)

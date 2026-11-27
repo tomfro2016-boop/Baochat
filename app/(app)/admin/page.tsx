@@ -228,7 +228,7 @@ function UsersTab() {
                 <tr key={u.id} className="hover:bg-surface2/40">
                   <td className="px-4 py-2.5">
                     <p className="font-medium">
-                      {u.display_name} {u.role === 'admin' && <span className="chip ml-1 !py-0 text-[10px] !text-accent">admin</span>}
+                      {u.display_name} {u.role === 'admin' && <span className="chip ml-1 !py-0 text-[10px] !text-primary">admin</span>}
                     </p>
                     <p className="text-xs text-muted">
                       {u.email} · BC-{String(u.seq).padStart(6, '0')}
@@ -268,7 +268,7 @@ function UsersTab() {
           <div className="card max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-b-none p-5 sm:rounded-b-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate font-semibold">{sel.display_name}</p>
+                <p className="truncate font-medium">{sel.display_name}</p>
                 <p className="truncate text-xs text-muted">{sel.email}</p>
               </div>
               <button className="icon-btn -mr-2 -mt-1" onClick={() => setSel(null)} aria-label="Close">
@@ -276,13 +276,13 @@ function UsersTab() {
               </button>
             </div>
             <dl className="mb-4 grid grid-cols-2 gap-2 text-sm">
-              <div className="rounded-xl bg-surface2 p-3">
+              <div className="rounded-md bg-surface2 p-3">
                 <dt className="text-[11px] text-muted">{tr('Token còn lại', 'Balance')}</dt>
-                <dd className="font-semibold tabular-nums">{sel.role === 'admin' ? '∞' : fmtNum(sel.token_balance)}</dd>
+                <dd className="font-medium tabular-nums">{sel.role === 'admin' ? '∞' : fmtNum(sel.token_balance)}</dd>
               </div>
-              <div className="rounded-xl bg-surface2 p-3">
+              <div className="rounded-md bg-surface2 p-3">
                 <dt className="text-[11px] text-muted">{tr('Hạn mức/chu kỳ', 'Quota/cycle')}</dt>
-                <dd className="font-semibold tabular-nums">{sel.role === 'admin' ? '∞' : fmtNum(sel.token_quota)}</dd>
+                <dd className="font-medium tabular-nums">{sel.role === 'admin' ? '∞' : fmtNum(sel.token_quota)}</dd>
               </div>
             </dl>
 
@@ -378,7 +378,7 @@ function ModelsTab() {
       <Section title="API Providers" hint={tr('Khóa API chỉ nằm trong biến môi trường của máy chủ; ở đây chỉ hiển thị có/không và tên biến.', 'API keys live only in server environment variables; this page only shows presence and variable names.')}>
         <div className="space-y-3">
           {data.providers.map((p) => (
-            <div key={p.id} className="rounded-xl border border-line p-3.5">
+            <div key={p.id} className="rounded-md border border-line p-3.5">
               <div className="flex flex-wrap items-center gap-3">
                 <p className="font-medium">{p.label}</p>
                 <span className="chip">{p.kind}</span>
@@ -568,7 +568,7 @@ function SettingsTab() {
             <input type="number" className="input" value={s.max_upload_mb} onChange={(e) => set('max_upload_mb', e.target.value)} />
           </Field>
         </div>
-        <div className="mt-5 flex items-center justify-between rounded-xl bg-surface2 px-4 py-3">
+        <div className="mt-5 flex items-center justify-between rounded-md bg-surface2 px-4 py-3">
           <div>
             <p className="text-sm font-medium">{tr('Cho phép đăng ký mới', 'Open registration')}</p>
             <p className="text-xs text-muted">{tr('Tắt để chặn tạo tài khoản mới (đăng nhập vẫn hoạt động).', 'Turn off to block new sign-ups (sign-in still works).')}</p>
@@ -658,7 +658,7 @@ function LogsTab() {
 
   return (
     <>
-      <div className="mb-4 flex w-fit rounded-xl border border-line p-0.5">
+      <div className="mb-4 flex w-fit rounded-md border border-line p-0.5">
         {(['activity', 'error'] as const).map((t) => (
           <button key={t} onClick={() => setType(t)} className={`rounded-lg px-4 py-1.5 text-xs font-medium transition-colors ${type === t ? 'bg-primary text-white' : 'text-muted hover:text-ink'}`}>
             {t === 'activity' ? tr('Hoạt động', 'Activity') : tr('Lỗi', 'Errors')}
@@ -718,7 +718,7 @@ export default function AdminPage() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-xl border px-4 py-2 text-sm transition-colors ${tab === t.id ? 'border-primary bg-primary/15 text-ink' : 'border-line text-muted hover:bg-surface2 hover:text-ink'}`}
+            className={`inline-flex shrink-0 items-center gap-2 rounded-md border px-4 py-2 text-sm transition-colors ${tab === t.id ? 'border-primary bg-surface2 text-ink' : 'border-line text-muted hover:bg-surface2 hover:text-ink'}`}
           >
             <t.icon size={15} /> {t.label}
           </button>

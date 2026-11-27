@@ -20,18 +20,18 @@ function CodeBlock({ children }: { children: any }) {
   const lang = /language-([\w-]+)/.exec(cls)?.[1] || 'code';
   const text = nodeText(codeEl?.props?.children).replace(/\n$/, '');
   return (
-    <div className="code-block my-3 overflow-hidden rounded-xl border border-line">
-      <div className="flex items-center justify-between bg-[#161b22] px-4 py-1.5 text-xs text-[#9298AA]">
+    <div className="code-block my-3 overflow-hidden rounded-lg border border-line">
+      <div className="flex items-center justify-between bg-[#1c1a16] px-4 py-1.5 text-xs text-[#948e83]">
         <span className="font-mono">{lang}</span>
         <button
-          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors hover:bg-white/10 hover:text-white"
+          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors duration-150 hover:bg-white/10 hover:text-white"
           onClick={async () => {
             await navigator.clipboard.writeText(text);
             setCopied(true);
             setTimeout(() => setCopied(false), 1500);
           }}
         >
-          {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? 'Copied' : 'Copy'}
+          {copied ? <Check size={13} strokeWidth={1.5} /> : <Copy size={13} strokeWidth={1.5} />} {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
       <pre>{children}</pre>

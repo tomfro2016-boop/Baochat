@@ -10,13 +10,14 @@ import {
   Globe2,
   ImagePlus,
   Monitor,
+  Pencil,
   Plus,
   Presentation,
   Save,
   Smartphone,
-  Sparkles,
   Tablet,
   Trash2,
+  Wand2,
   X,
 } from 'lucide-react';
 import Markdown from '@/components/Markdown';
@@ -90,7 +91,7 @@ function WebsiteEditor({ payload, onChange }: { payload: Payload; onChange: (p: 
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="flex rounded-xl border border-line p-0.5">
+        <div className="flex rounded-md border border-line p-0.5">
           {(['preview', 'code'] as const).map((v) => (
             <button key={v} onClick={() => setView(v)} className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${view === v ? 'bg-primary text-white' : 'text-muted hover:text-ink'}`}>
               {v === 'preview' ? tr('Xem trước', 'Preview') : tr('Mã nguồn', 'Code')}
@@ -114,14 +115,14 @@ function WebsiteEditor({ payload, onChange }: { payload: Payload; onChange: (p: 
       </div>
 
       {view === 'preview' ? (
-        <div className="overflow-hidden rounded-xl border border-line bg-surface2 p-2">
-          <div className="mx-auto transition-all duration-300" style={{ width, maxWidth: '100%' }}>
+        <div className="overflow-hidden rounded-md border border-line bg-surface2 p-2">
+          <div className="mx-auto transition-colors duration-300" style={{ width, maxWidth: '100%' }}>
             {/* sandbox KHÔNG có allow-same-origin: mã do AI sinh không thể đọc cookie/phiên của Baochat */}
             <iframe title="preview" srcDoc={html} sandbox="allow-scripts allow-forms allow-modals allow-popups" className="h-[560px] w-full rounded-lg bg-white" />
           </div>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-line">
+        <div className="overflow-hidden rounded-md border border-line">
           <div className="flex gap-0.5 overflow-x-auto border-b border-line bg-surface2 px-2 pt-2">
             {files.map((f, i) => (
               <button key={f.path} onClick={() => setSel(i)} className={`whitespace-nowrap rounded-t-lg px-3 py-1.5 font-mono text-xs transition-colors ${i === idx ? 'bg-[#0d1117] text-white' : 'text-muted hover:text-ink'}`}>
@@ -151,7 +152,7 @@ function DocumentEditor({ payload, onChange }: { payload: Payload; onChange: (p:
   const [view, setView] = useState<'edit' | 'preview'>('preview');
   return (
     <div>
-      <div className="mb-3 flex rounded-xl border border-line p-0.5 sm:w-fit">
+      <div className="mb-3 flex rounded-md border border-line p-0.5 sm:w-fit">
         {(['preview', 'edit'] as const).map((v) => (
           <button key={v} onClick={() => setView(v)} className={`flex-1 rounded-lg px-4 py-1.5 text-xs font-medium transition-colors ${view === v ? 'bg-primary text-white' : 'text-muted hover:text-ink'}`}>
             {v === 'preview' ? tr('Xem trước', 'Preview') : tr('Chỉnh sửa (Markdown)', 'Edit (Markdown)')}
@@ -159,7 +160,7 @@ function DocumentEditor({ payload, onChange }: { payload: Payload; onChange: (p:
         ))}
       </div>
       {view === 'preview' ? (
-        <div className="max-h-[620px] overflow-y-auto rounded-xl border border-line bg-surface2/40 p-6 sm:p-8">
+        <div className="max-h-[620px] overflow-y-auto rounded-md border border-line bg-surface2/40 p-6 sm:p-8">
           <Markdown>{payload.markdown}</Markdown>
         </div>
       ) : (
@@ -231,7 +232,7 @@ function PresentationEditor({ payload, onChange }: { payload: Payload; onChange:
           </li>
           {deck.slides.map((s, n) => (
             <li key={n}>
-              <button onClick={() => setSel(n)} className={`w-full rounded-lg border px-2.5 py-2 text-left text-[11px] transition-colors ${n === i ? 'border-primary bg-primary/10' : 'border-line hover:bg-surface2'}`}>
+              <button onClick={() => setSel(n)} className={`w-full rounded-lg border px-2.5 py-2 text-left text-[11px] transition-colors ${n === i ? 'border-primary bg-surface2' : 'border-line hover:bg-surface2'}`}>
                 <span className="text-muted">{n + 1}.</span> <span className="font-medium">{s.title || '—'}</span>
               </button>
             </li>
@@ -262,10 +263,10 @@ function PresentationEditor({ payload, onChange }: { payload: Payload; onChange:
         {slide && (
           <>
             {/* Xem trước bố cục slide 16:9 */}
-            <div className="aspect-video w-full overflow-hidden rounded-xl border border-line bg-gradient-to-br from-[#171a2b] to-[#0B0D12] p-[4%] text-white shadow-lg">
+            <div className="aspect-video w-full overflow-hidden rounded-md border border-line bg-[#171512] p-[4%] text-white">
               <div className="flex h-full flex-col">
-                <h3 className="text-[clamp(14px,2.4vw,26px)] font-semibold leading-tight">{slide.title}</h3>
-                <div className="my-[2%] h-[3px] w-12 rounded bg-[#7867FF]" />
+                <h3 className="text-[clamp(14px,2.4vw,26px)] font-medium leading-tight">{slide.title}</h3>
+                <div className="my-[2%] h-[3px] w-12 rounded bg-[#F0A528]" />
                 <ul className="list-disc space-y-[1%] overflow-hidden pl-[4%] text-[clamp(10px,1.5vw,16px)] leading-snug text-white/85">
                   {slide.bullets.filter(Boolean).map((b, n) => (
                     <li key={n}>{b}</li>
@@ -276,7 +277,7 @@ function PresentationEditor({ payload, onChange }: { payload: Payload; onChange:
 
             <div className="card space-y-3 p-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">
+                <p className="text-sm font-medium">
                   {tr('Slide', 'Slide')} {i + 1}/{deck.slides.length}
                 </p>
                 <div className="flex gap-0.5">
@@ -319,7 +320,7 @@ function PresentationEditor({ payload, onChange }: { payload: Payload; onChange:
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold">{tr('Hình minh họa', 'Illustrations')}</p>
+              <p className="text-sm font-medium">{tr('Hình minh họa', 'Illustrations')}</p>
               <p className="text-xs text-muted">{tr('Ảnh bạn tải lên sẽ được chèn vào các slide khi xuất PPTX.', 'Uploaded images are placed on slides when exporting PPTX.')}</p>
             </div>
             <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" multiple className="hidden" onChange={(e) => addImage(e.target.files)} />
@@ -339,7 +340,7 @@ function PresentationEditor({ payload, onChange }: { payload: Payload; onChange:
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={`/api/files/${id}`} alt="" className="h-16 w-24 rounded-lg border border-line object-cover" />
                   <button
-                    className="absolute -right-1.5 -top-1.5 hidden h-5 w-5 items-center justify-center rounded-full bg-danger text-white group-hover:flex max-lg:flex"
+                    className="absolute -right-1.5 -top-1.5 hidden h-5 w-5 items-center justify-center rounded-md bg-danger text-white group-hover:flex max-lg:flex"
                     onClick={() => onChange({ ...payload, imageFileIds: imageIds.filter((x) => x !== id) })}
                     aria-label="Remove"
                   >
@@ -378,12 +379,12 @@ function SpreadsheetEditor({ payload, onChange }: { payload: Payload; onChange: 
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
         {sheets.map((s, n) => (
-          <button key={n} onClick={() => setSel(n)} className={`rounded-lg border px-3 py-1.5 text-xs transition-colors ${n === i ? 'border-primary bg-primary/15' : 'border-line text-muted hover:bg-surface2'}`}>
+          <button key={n} onClick={() => setSel(n)} className={`rounded-lg border px-3 py-1.5 text-xs transition-colors ${n === i ? 'border-primary bg-surface2' : 'border-line text-muted hover:bg-surface2'}`}>
             {s.name}
           </button>
         ))}
       </div>
-      <div className="max-h-[520px] overflow-auto rounded-xl border border-line">
+      <div className="max-h-[520px] overflow-auto rounded-md border border-line">
         <table className="w-full border-collapse text-sm">
           <thead className="sticky top-0 z-10 bg-surface2">
             <tr>
@@ -393,7 +394,7 @@ function SpreadsheetEditor({ payload, onChange }: { payload: Payload; onChange: 
                   <input
                     value={c}
                     onChange={(e) => mutate((b) => void (b.sheets[i].columns[ci] = e.target.value))}
-                    className="w-full bg-transparent px-2.5 py-1.5 text-left text-xs font-semibold outline-none focus:bg-primary/10"
+                    className="w-full bg-transparent px-2.5 py-1.5 text-left text-xs font-medium outline-none focus:bg-surface2"
                   />
                 </th>
               ))}
@@ -415,7 +416,7 @@ function SpreadsheetEditor({ payload, onChange }: { payload: Payload; onChange: 
                           r[ci] = parse(e.target.value);
                         })
                       }
-                      className={`w-full bg-transparent px-2.5 py-1.5 outline-none focus:bg-primary/10 ${typeof row[ci] === 'number' ? 'text-right tabular-nums' : ''} ${typeof row[ci] === 'string' && String(row[ci]).startsWith('=') ? 'text-accent' : ''}`}
+                      className={`w-full bg-transparent px-2.5 py-1.5 outline-none focus:bg-surface2 ${typeof row[ci] === 'number' ? 'text-right tabular-nums' : ''} ${typeof row[ci] === 'string' && String(row[ci]).startsWith('=') ? 'text-accent' : ''}`}
                     />
                   </td>
                 ))}
@@ -605,7 +606,7 @@ export default function StudioPage() {
   };
 
   return (
-    <Page wide title="AI Studio" subtitle={tr('Tạo website, tài liệu, slide và bảng tính thật từ mô tả của bạn.', 'Create real websites, documents, slides and spreadsheets from a description.')}>
+    <Page wide title="Studio" subtitle={tr('Tạo website, tài liệu, slide và bảng tính thật từ mô tả của bạn.', 'Create real websites, documents, slides and spreadsheets from a description.')}>
       <div className="mb-5 flex flex-wrap gap-2">
         {KINDS.map((k) => (
           <button
@@ -615,7 +616,7 @@ export default function StudioPage() {
               if (dirty && !confirm(tr('Bỏ các thay đổi chưa lưu?', 'Discard unsaved changes?'))) return;
               setKind(k.id);
             }}
-            className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all ${kind === k.id ? 'border-primary bg-primary/15 text-ink shadow-glow' : 'border-line text-muted hover:bg-surface2 hover:text-ink'}`}
+            className={`inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm transition-colors ${kind === k.id ? 'border-primary bg-surface2 text-ink' : 'border-line text-muted hover:bg-surface2 hover:text-ink'}`}
           >
             <k.icon size={16} /> {tr(k.vi, k.en)}
           </button>
@@ -669,7 +670,7 @@ export default function StudioPage() {
                 </ErrorNote>
               )}
               <button className="btn-primary w-full" onClick={() => generate()} disabled={generating || prompt.trim().length < 3 || outOfTokens || !models.length}>
-                {generating && !item ? <Spinner /> : <Sparkles size={16} />} {tr('Tạo bằng AI', 'Generate with AI')}
+                {generating && !item ? <Spinner /> : <Wand2 size={16} strokeWidth={1.5} />} {tr('Tạo bằng AI', 'Generate with AI')}
               </button>
               {!models.length && <p className="text-xs text-danger">{tr('Chưa có model AI nào được cấu hình trên máy chủ.', 'No AI model is configured on the server.')}</p>}
               <p className="text-[11px] text-muted">{tr('Việc tạo bằng AI tiêu tốn token; chỉnh sửa thủ công và tải xuống thì miễn phí.', 'AI generation consumes tokens; manual edits and downloads are free.')}</p>
@@ -677,7 +678,7 @@ export default function StudioPage() {
           </div>
 
           <div className="card p-4">
-            <h3 className="mb-3 text-sm font-semibold">{tr('Đã lưu', 'Saved')}</h3>
+            <h3 className="mb-3 text-sm font-medium">{tr('Đã lưu', 'Saved')}</h3>
             {list === null ? (
               <div className="flex justify-center py-4 text-muted">
                 <Spinner />
@@ -724,7 +725,7 @@ export default function StudioPage() {
 
           {!generating && !item && (
             <div className="card flex flex-col items-center gap-3 px-6 py-20 text-center">
-              <meta.icon size={36} className="text-accent" />
+              <meta.icon size={32} strokeWidth={1.5} className="text-muted" />
               <p className="font-medium">{tr(meta.vi, meta.en)}</p>
               <p className="max-w-sm text-sm text-muted">{tr('Mô tả ý tưởng ở bên trái rồi bấm "Tạo bằng AI", hoặc mở một mục đã lưu.', 'Describe your idea on the left and press "Generate with AI", or open a saved item.')}</p>
             </div>
@@ -746,9 +747,9 @@ export default function StudioPage() {
 
               <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-4">{downloadButtons()}</div>
 
-              <div className="mt-5 rounded-xl bg-surface2/60 p-4">
+              <div className="mt-5 rounded-md bg-surface2/60 p-4">
                 <p className="mb-2 flex items-center gap-1.5 text-sm font-medium">
-                  <Sparkles size={15} className="text-accent" /> {tr('Nhờ AI chỉnh sửa', 'Ask AI to revise')}
+                  <Pencil size={15} strokeWidth={1.5} className="text-muted" /> {tr('Nhờ AI chỉnh sửa', 'Ask AI to revise')}
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <input

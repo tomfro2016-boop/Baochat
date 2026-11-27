@@ -5,11 +5,19 @@ export function hexToTriple(hex: string): [number, number, number] {
 
 const mix = (a: number[], b: number[], t: number) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 
-/** Từ màu nhấn người dùng chọn -> bộ biến CSS primary/accent phù hợp theme. */
+export const DEFAULT_ACCENT = '#F0A528';
+
+/** Từ màu nhấn người dùng chọn -> bộ biến CSS primary/accent/on-primary phù hợp theme. */
 export function accentVars(hex: string, theme: string) {
-  const p = hexToTriple(/^#[0-9a-fA-F]{6}$/.test(hex) ? hex : '#7867FF');
-  const accent = theme === 'light' ? mix(p, [0, 0, 0], 0.18) : mix(p, [255, 255, 255], 0.35);
-  return { primary: p.join(' '), accent: accent.join(' ') };
+  // Tài khoản cũ còn lưu màu tím mặc định của bản trước: coi như chưa chọn màu
+  const h = /^#[0-9a-fA-F]{6}$/.test(hex) && hex.toUpperCase() !== '#7867FF' ? hex : DEFAULT_ACCENT;
+  const base = hexToTriple(h);
+  const light = theme === 'light';
+  const p = light ? mix(base, [0, 0, 0], 0.22) : base;
+  const accent = light ? mix(base, [0, 0, 0], 0.4) : mix(base, [255, 255, 255], 0.3);
+  const lum = (0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2]) / 255;
+  const on = lum > 0.5 ? [24, 18, 6] : [255, 252, 246];
+  return { primary: p.join(' '), accent: accent.join(' '), onPrimary: on.join(' ') };
 }
 
 export function fmtCountdown(ms: number) {

@@ -5,15 +5,12 @@ import { Loader2 } from 'lucide-react';
 import { useApp } from './Providers';
 import { fmtCountdown } from '@/lib/client/util';
 
-/** Dấu hiệu: chữ b dựng từ một thanh đứng và một vòng tròn, như thanh con trỏ cạnh một ô chat. */
+/** Logo tạm thời do chủ dự án cung cấp (public/logo.png). */
 export function Logo({ size = 32, withText = true }: { size?: number; withText?: boolean }) {
   return (
     <span className="group inline-flex items-center gap-2">
-      <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden className="transition-transform duration-200 group-hover:-rotate-6">
-        <rect width="32" height="32" rx="8" fill="rgb(var(--primary))" />
-        <rect x="9" y="6.5" width="3.6" height="19" rx="1.2" fill="rgb(var(--on-primary))" />
-        <circle cx="19" cy="18" r="4.6" fill="none" stroke="rgb(var(--on-primary))" strokeWidth="3.4" />
-      </svg>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo.png" alt="" width={size} height={size} className="shrink-0 transition-transform duration-200 group-hover:-rotate-6" style={{ width: size, height: size }} />
       {withText && <span className="text-base font-medium">Baochat</span>}
     </span>
   );

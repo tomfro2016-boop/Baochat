@@ -20,6 +20,7 @@ function nodeText(node: any): string {
 
 function CodeBlock({ children }: { children: any }) {
   const [copied, setCopied] = useState(false);
+  const [runApp, setRunApp] = useState(false);
   const codeEl: any = Array.isArray(children) ? children[0] : children;
   const cls: string = codeEl?.props?.className || '';
   const lang = /language-([\w-]+)/.exec(cls)?.[1] || 'code';
@@ -36,6 +37,11 @@ function CodeBlock({ children }: { children: any }) {
     <div className="code-block my-3 overflow-hidden rounded-lg border border-line">
       <div className="flex items-center justify-between bg-[#1c1a16] px-4 py-1.5 text-xs text-[#948e83]">
         <span className="font-mono">{lang}</span>
+        {lang === 'html' && (
+          <button className="ml-auto mr-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[#F0A528] transition-colors duration-150 hover:bg-white/10" onClick={() => setRunApp((v) => !v)}>
+            {runApp ? 'Ẩn' : 'Chạy thử'}
+          </button>
+        )}
         <button
           className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors duration-150 hover:bg-white/10 hover:text-white"
           onClick={async () => {
@@ -47,6 +53,7 @@ function CodeBlock({ children }: { children: any }) {
           {copied ? <Check size={13} strokeWidth={1.5} /> : <Copy size={13} strokeWidth={1.5} />} {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
+      {lang === 'html' && runApp && <iframe title="app" sandbox="allow-scripts" srcDoc={text} className="h-[420px] w-full border-t border-line bg-white" />}
       <pre>{children}</pre>
     </div>
   );

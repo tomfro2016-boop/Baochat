@@ -169,7 +169,7 @@ export default function PersonalizePage() {
       setErr(e instanceof Error ? e.message : String(e));
     }
   };
-  type Asst = { id: string; name: string; description: string; instructions: string; share_token: string | null };
+  type Asst = { id: string; name: string; description: string; instructions: string; share_token: string | null; files?: { id: string; name: string }[] };
   type Added = { id: string; name: string; description: string; owner_name: string };
   const [assts, setAssts] = useState<Asst[]>([]);
   const [added, setAdded] = useState<Added[]>([]);
@@ -194,6 +194,22 @@ export default function PersonalizePage() {
     } finally {
       setStyleBusy(false);
     }
+  };
+  const addKnowledge = async (a: Asst, file: File) => {
+    setErr('');
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const up = await api<{ id: string; readable: boolean }>('/api/files', { form });
+      const r = await api<{ file: { id: string; name: string } }>(`/api/assistants/${a.id}/files`, { body: { fileId: up.id } });
+      setAssts((list) => list.map((x) => (x.id === a.id ? { ...x, files: [...(x.files ?? []), r.file] } : x)));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    }
+  };
+  const delKnowledge = async (a: Asst, fileId: string) => {
+    setAssts((list) => list.map((x) => (x.id === a.id ? { ...x, files: (x.files ?? []).filter((f) => f.id !== fileId) } : x)));
+    await api(`/api/assistants/${a.id}/files?fileId=${fileId}`, { method: 'DELETE' }).catch(() => {});
   };
   const resetAsst = () => { setAId(null); setAName(''); setADesc(''); setAText(''); };
   const saveAsst = async () => {
@@ -387,6 +403,16 @@ export default function PersonalizePage() {
                         </button>
                       </div>
                       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                        {(a.files ?? []).map((f) => (
+                          <span key={f.id} className="chip !py-0.5">
+                            {f.name.slice(0, 28)}
+                            <button className="ml-1 text-muted hover:text-danger" onClick={() => delKnowledge(a, f.id)} aria-label={tr('Gỡ tài liệu', 'Remove document')}>×</button>
+                          </span>
+                        ))}
+                        <label className="cursor-pointer text-primary hover:underline">
+                          {tr('+ Tài liệu nội bộ', '+ Knowledge file')}
+                          <input type="file" className="hidden" accept=".pdf,.docx,.pptx,.xlsx,.csv,.txt,.md,.json" onChange={(e) => { const f = e.target.files?.[0]; if (f) addKnowledge(a, f); e.target.value = ''; }} />
+                        </label>
                         {a.share_token ? (
                           <>
                             <span className="max-w-[260px] truncate font-mono text-muted">/a/{a.share_token}</span>

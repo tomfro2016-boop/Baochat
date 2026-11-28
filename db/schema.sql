@@ -262,3 +262,11 @@ CREATE TABLE IF NOT EXISTS assistant_subs (
   created_at    timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, assistant_id)
 );
+
+-- Tài liệu nội bộ của trợ lý
+CREATE TABLE IF NOT EXISTS assistant_files (
+  assistant_id  uuid NOT NULL REFERENCES assistants(id) ON DELETE CASCADE,
+  file_id       uuid NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (assistant_id, file_id)
+);

@@ -5,7 +5,13 @@ import { requireUser } from '@/lib/auth';
 
 export const GET = handler(async () => {
   const u = await requireUser();
-  const mine = await q('SELECT id, name, description, instructions, share_token FROM assistants WHERE user_id = $1 ORDER BY created_at', [u.id]);
+  const mine = await q(
+    `SELECT a.id, a.name, a.description, a.instructions, a.share_token,
+            COALESCE((SELECT json_agg(json_build_object('id', f.id, 'name', f.name) ORDER BY af.created_at)
+                        FROM assistant_files af JOIN files f ON f.id = af.file_id WHERE af.assistant_id = a.id), '[]'::json) AS files
+       FROM assistants a WHERE a.user_id = $1 ORDER BY a.created_at`,
+    [u.id],
+  );
   // Trợ lý được chia sẻ: người dùng KHÔNG thấy phần hướng dẫn
   const added = await q(
     `SELECT a.id, a.name, a.description, usr.display_name AS owner_name

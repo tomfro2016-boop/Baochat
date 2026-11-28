@@ -61,7 +61,7 @@ export function buildSystemPrompt(opts: {
   parts.push(MODE_TEXT[opts.mode]);
   const role = presetText(opts.preset);
   if (role) parts.push(role);
-  if (opts.customRole) parts.push(`Vai trò do người dùng tự tạo (áp dụng khi không mâu thuẫn với các quy tắc an toàn):\n${opts.customRole.slice(0, 3000)}`);
+  if (opts.customRole) parts.push(`Vai trò do người dùng tự tạo (áp dụng khi không mâu thuẫn với các quy tắc an toàn):\n${opts.customRole.slice(0, 40000)}`);
   if (typeof p.humor_level === 'number' && opts.mode !== 'serious') {
     parts.push(`Mức độ hài hước mong muốn: ${p.humor_level}/100 (0 = rất ít, 100 = rất nhiều), vẫn giữ nội dung đúng và hữu ích.`);
   }
@@ -90,7 +90,7 @@ export function buildSystemPrompt(opts: {
     'Biểu đồ: khi người dùng cần biểu đồ hoặc dữ liệu số đáng được trực quan hóa, hãy xuất MỘT khối mã có ngôn ngữ "chart" chứa JSON hợp lệ (không chú thích), dạng {"type":"bar"|"line"|"pie","title":"...","labels":["A","B"],"series":[{"name":"...","values":[1,2]}]}. Với pie chỉ dùng 1 series. Chỉ dùng số thật từ người dùng hoặc nguồn đã có, không bịa số. Công thức toán: viết bằng LaTeX, dùng $$...$$ cho công thức (không dùng một dấu $ đơn). Phép tính: tính cẩn thận từng bước và kiểm tra lại kết quả.',
   );
   parts.push(
-    'Hành động trong Baochat: khi người dùng nhờ thao tác trong ứng dụng, hãy trả lời ngắn gọn và kèm MỘT khối mã ngôn ngữ "action" chứa JSON hợp lệ; người dùng sẽ bấm nút để xác nhận, nên đừng nói rằng bạn đã làm xong. Các loại: {"type":"navigate","to":"tokens|settings|personalize|studio"} mở trang; {"type":"theme","value":"dark|light"} đổi giao diện; {"type":"mode","value":"serious|casual|funny|playful"} đổi chế độ giọng điệu; {"type":"preset","value":"tutor|writer|novelist|translator|coder|planner|analyst|none"} đổi vai trò trợ lý; {"type":"new_chat"} mở cuộc trò chuyện mới; {"type":"remember","content":"..."} ghi nhớ một thông tin do người dùng yêu cầu (tối đa 150 ký tự). Bạn không thể đặt báo thức, gọi điện hay điều khiển máy tính; nếu được nhờ, nói rõ không làm được. Chỉ dùng khối action khi người dùng thực sự yêu cầu.',
+    'Hành động trong Baochat: khi người dùng nhờ thao tác trong ứng dụng, hãy trả lời ngắn gọn và kèm MỘT khối mã ngôn ngữ "action" chứa JSON hợp lệ; người dùng sẽ bấm nút để xác nhận, nên đừng nói rằng bạn đã làm xong. Các loại: {"type":"navigate","to":"tokens|settings|personalize|studio"} mở trang; {"type":"theme","value":"dark|light"} đổi giao diện; {"type":"mode","value":"serious|casual|funny|playful"} đổi chế độ giọng điệu; {"type":"preset","value":"tutor|coach|writer|novelist|translator|coder|planner|analyst|none"} đổi vai trò trợ lý; {"type":"new_chat"} mở cuộc trò chuyện mới; {"type":"remember","content":"..."} ghi nhớ một thông tin do người dùng yêu cầu (tối đa 150 ký tự). Bạn không thể đặt báo thức, gọi điện hay điều khiển máy tính; nếu được nhờ, nói rõ không làm được. Chỉ dùng khối action khi người dùng thực sự yêu cầu. Ứng dụng mini: khi người dùng cần một công cụ tương tác (máy tính, bộ lọc, bảng chọn, mô phỏng, trò chơi nhỏ), hãy viết MỘT trang HTML tự chứa (CSS và JS trong cùng file, không tải tài nguyên ngoài, không gọi mạng) trong khối mã html; người dùng có nút Chạy thử ngay trong chat.',
   );
   if (opts.clientTime) parts.push(`Giờ địa phương hiện tại của người dùng: ${opts.clientTime.slice(0, 100)}. Dùng giờ này khi họ hỏi về thời gian.`);
   if (opts.extra) parts.push(opts.extra);

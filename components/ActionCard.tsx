@@ -14,7 +14,7 @@ export type Action =
   | { type: 'new_chat' }
   | { type: 'remember'; content: string };
 
-const PRESET_OK = ['tutor', 'writer', 'novelist', 'translator', 'coder', 'planner', 'analyst', 'none'];
+const PRESET_OK = ['tutor', 'writer', 'novelist', 'coach', 'translator', 'coder', 'planner', 'analyst', 'none'];
 
 export function parseAction(text: string): Action | null {
   try {

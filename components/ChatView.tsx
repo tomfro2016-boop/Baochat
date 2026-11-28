@@ -36,6 +36,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import Markdown from './Markdown';
+import Canvas from './Canvas';
 import DotField from './fx/DotField';
 import { PRESETS } from '@/lib/ai/presets';
 import { DEEP_META } from '@/lib/ai/deep-meta';
@@ -235,6 +236,7 @@ export default function ChatView() {
   const [mode, setMode] = useState<Mode>('casual');
   const [modelId, setModelId] = useState<string>('auto');
   const [preset, setPresetState] = useState<string>('none');
+  const [canvasText, setCanvasText] = useState<string | null>(null);
   const [deep, setDeep] = useState<string>('none');
   const [myAssistants, setMyAssistants] = useState<{ id: string; name: string }[]>([]);
   const [listening, setListening] = useState(false);
@@ -959,6 +961,11 @@ export default function ChatView() {
                           <button className="icon-btn !h-8 !w-8" onClick={() => copy(m)} title={tr('Sao chép', 'Copy')} aria-label={tr('Sao chép', 'Copy')}>
                             {copied === m.id ? <Check size={15} strokeWidth={1.5} className="text-ok" /> : <Copy size={15} strokeWidth={1.5} />}
                           </button>
+                          {m.content.length > 80 && !m.streaming && (
+                            <button className="icon-btn !h-8 !w-8" onClick={() => setCanvasText(m.content)} title={tr('Mở Canvas để chỉnh sửa', 'Open in Canvas')} aria-label="Canvas">
+                              <Pencil size={15} strokeWidth={1.5} />
+                            </button>
+                          )}
                           <button className={`icon-btn !h-8 !w-8 ${speakingId === m.id ? '!text-primary' : ''}`} onClick={() => speak(m)} title={tr('Đọc to', 'Read aloud')} aria-label={tr('Đọc to', 'Read aloud')}>
                             <Volume2 size={15} strokeWidth={1.5} />
                           </button>
@@ -1136,6 +1143,7 @@ export default function ChatView() {
           </motion.div>
         )}
       </AnimatePresence>
+      {canvasText !== null && <Canvas key={canvasText.length + canvasText.slice(0, 20)} initial={canvasText} onClose={() => setCanvasText(null)} />}
     </div>
   );
 }

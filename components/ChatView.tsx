@@ -38,6 +38,7 @@ import {
 import Markdown from './Markdown';
 import DotField from './fx/DotField';
 import { PRESETS } from '@/lib/ai/presets';
+import { DEEP_META } from '@/lib/ai/deep-meta';
 import Magnetic from './fx/Magnetic';
 import Scramble from './fx/Scramble';
 import { useSpotlight } from './fx/useSpotlight';
@@ -234,6 +235,7 @@ export default function ChatView() {
   const [mode, setMode] = useState<Mode>('casual');
   const [modelId, setModelId] = useState<string>('auto');
   const [preset, setPresetState] = useState<string>('none');
+  const [deep, setDeep] = useState<string>('none');
   const [myAssistants, setMyAssistants] = useState<{ id: string; name: string }[]>([]);
   const [listening, setListening] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
@@ -438,6 +440,7 @@ export default function ChatView() {
             modelId: modelId === 'auto' ? null : modelId,
             preset: preset === 'none' || preset.startsWith('a:') ? null : preset,
             assistantId: preset.startsWith('a:') ? preset.slice(2) : null,
+            deep: deep === 'none' ? null : deep,
             editMessageId: opts.editMessageId,
           },
           (e: SseEvent) => {
@@ -495,7 +498,7 @@ export default function ChatView() {
         if (realConv) bumpConvs();
       }
     },
-    [busy, convId, search, mode, modelId, preset, router, bumpConvs, patchTokens, refresh],
+    [busy, convId, search, mode, modelId, preset, deep, router, bumpConvs, patchTokens, refresh],
   );
 
   const send = () => {
@@ -791,6 +794,12 @@ export default function ChatView() {
           onChange={setPreset}
           icon={<UserRound size={14} strokeWidth={1.5} className="text-muted" />}
           options={[{ id: 'none', label: tr('Trợ lý chung', 'General') }, ...PRESETS.map((p) => ({ id: p.id as string, label: tr(p.vi, p.en) })), ...myAssistants.map((a) => ({ id: `a:${a.id}`, label: a.name }))]}
+        />
+        <Dropdown
+          value={deep}
+          onChange={setDeep}
+          icon={<Zap size={14} strokeWidth={1.5} className={deep === 'none' ? 'text-muted' : 'text-primary'} />}
+          options={[{ id: 'none', label: tr('Thường', 'Standard') }, ...DEEP_META.map((d) => ({ id: d.id as string, label: tr(d.vi, d.en) }))]}
         />
         {msgs.length > 0 && (
           <button type="button" className="icon-btn" onClick={exportMd} title={tr('Tải cuộc trò chuyện (.md)', 'Download conversation (.md)')} aria-label={tr('Tải cuộc trò chuyện', 'Download conversation')}>

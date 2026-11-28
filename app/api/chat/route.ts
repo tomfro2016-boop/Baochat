@@ -5,10 +5,11 @@ import { requireVerifiedUser } from '@/lib/auth';
 import { rateLimit } from '@/lib/ratelimit';
 import { getSettings } from '@/lib/settings';
 import { applyResetIfDue, loadFreshUserTokens, chargeTokens, estimateTokens } from '@/lib/tokens';
-import { listAvailableModels, orderModels, streamWithFallback, type ChatMsg, type ModelRow } from '@/lib/ai/providers';
+import { listAvailableModels, orderModels, streamWithFallback, completeWithFallback, type ChatMsg, type ModelRow } from '@/lib/ai/providers';
 import { buildSystemPrompt, type Mode } from '@/lib/ai/prompt';
 import { PRESET_IDS } from '@/lib/ai/presets';
 import { searchAndRead } from '@/lib/search';
+import { DEEP_IDS, deepText, PLAN_PROMPT, parsePlan, gatherSources } from '@/lib/ai/advanced';
 import { isImage } from '@/lib/files';
 import { env } from '@/lib/env';
 import { maybeExtractMemories } from '@/lib/ai/memory';
@@ -28,6 +29,7 @@ const schema = z.object({
   modelId: z.string().max(80).nullable().optional(),
   preset: z.enum(PRESET_IDS).nullable().optional(),
   assistantId: z.string().uuid().nullable().optional(),
+  deep: z.enum(DEEP_IDS).nullable().optional(),
   editMessageId: z.string().uuid().optional(),
 });
 
@@ -193,7 +195,24 @@ export const POST = handler(async (req) => {
 
       let sources: { title: string; url: string; snippet: string }[] = [];
       let searchContext = '';
-      if (b.search) {
+      const deep = b.deep ?? null;
+      if (deep === 'research') {
+        try {
+          send({ type: 'notice', message: 'Nghiên cứu chuyên sâu: đang lập kế hoạch tìm kiếm…' });
+          const plan = await completeWithFallback(models, [{ role: 'system', content: PLAN_PROMPT }, { role: 'user', content: userText.slice(0, 2000) }], { maxTokens: 300, temperature: 0.2, signal: req.signal });
+          const queries = parsePlan(plan.text, userText);
+          send({ type: 'notice', message: `Nghiên cứu chuyên sâu: ${queries.length} truy vấn — ${queries.join(' · ').slice(0, 200)}` });
+          const r = await gatherSources(queries, (m) => send({ type: 'notice', message: `Nghiên cứu chuyên sâu: ${m}` }));
+          sources = r.sources;
+          searchContext = r.context;
+          if (sources.length) send({ type: 'sources', sources });
+          else send({ type: 'notice', message: 'Không lấy được nguồn nào (kiểm tra TAVILY_API_KEY). Báo cáo sẽ dựa trên kiến thức sẵn có và nêu rõ điều đó.' });
+          send({ type: 'notice', message: 'Nghiên cứu chuyên sâu: đang viết báo cáo…' });
+        } catch (e) {
+          await logError('research', e instanceof Error ? e.message : String(e));
+          send({ type: 'notice', message: 'Không tìm được nguồn lúc này; báo cáo dựa trên kiến thức sẵn có.' });
+        }
+      } else if (b.search || deep === 'verify') {
         try {
           const query = userText.slice(0, 300) || 'tìm kiếm';
           const r = await searchAndRead(query);
@@ -212,15 +231,17 @@ export const POST = handler(async (req) => {
         memories,
         uiLang: user.ui_lang,
         userName: user.display_name,
-        withSearch: b.search,
+        withSearch: b.search || deep === 'research' || deep === 'verify',
         searchContext,
         preset: b.preset ?? null,
         customRole: customRow?.instructions ?? null,
+        extra: deepText(deep),
       });
       const full: ChatMsg[] = [{ role: 'system', content: system }, ...chatMsgs];
       const estIn = estimateTokens(full.map((m) => m.content).join('\n')) + (needVision ? 800 : 0);
       const balanceNow = user.isAdmin ? Infinity : tk.token_balance;
-      const maxOut = user.isAdmin ? 2048 : Math.max(256, Math.min(2048, Math.floor(balanceNow - estIn)));
+      const cap = deep === 'research' || deep === 'council' || deep === 'reasoning' ? 4096 : 2048;
+      const maxOut = user.isAdmin ? cap : Math.max(256, Math.min(cap, Math.floor(balanceNow - estIn)));
 
       let text = '';
       let usage: { input: number; output: number } | null = null;
@@ -228,7 +249,7 @@ export const POST = handler(async (req) => {
       let failed: string | null = null;
       let extractAfter = false;
       try {
-        for await (const ev of streamWithFallback(models, full, { maxTokens: maxOut, temperature: mode === 'serious' ? 0.3 : 0.8, signal: req.signal })) {
+        for await (const ev of streamWithFallback(models, full, { maxTokens: maxOut, temperature: mode === 'serious' || deep === 'reasoning' || deep === 'verify' || deep === 'research' ? 0.3 : 0.8, signal: req.signal })) {
           if (ev.model) {
             usedModel = ev.model;
             send({ type: 'model', id: ev.model.id, label: ev.model.label });

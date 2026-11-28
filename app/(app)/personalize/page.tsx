@@ -180,6 +180,21 @@ export default function PersonalizePage() {
   useEffect(() => {
     api<{ assistants: Asst[]; added: Added[] }>('/api/assistants').then((d) => { setAssts(d.assistants); setAdded(d.added); }).catch(() => {});
   }, []);
+  const [styleText, setStyleText] = useState('');
+  const [styleBusy, setStyleBusy] = useState(false);
+  const learnStyle = async () => {
+    setStyleBusy(true);
+    setErr('');
+    try {
+      const r = await api<{ assistant: Asst }>('/api/style', { body: { samples: styleText } });
+      setAssts((a) => [...a, r.assistant]);
+      setStyleText('');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setStyleBusy(false);
+    }
+  };
   const resetAsst = () => { setAId(null); setAName(''); setADesc(''); setAText(''); };
   const saveAsst = async () => {
     if (!aName.trim() || aText.trim().length < 5) return;
@@ -386,6 +401,12 @@ export default function PersonalizePage() {
                   ))}
                 </ul>
               )}
+              <div className="space-y-2 border-t border-line pt-3">
+                <p className="mono-label">{tr('học văn phong của tôi', 'learn my writing style')}</p>
+                <p className="text-sm text-muted">{tr('Dán vài tin nhắn/email bạn đã tự viết (từ 200 ký tự). Baochat tạo trợ lý "Văn phong của tôi" để soạn thư theo giọng của bạn. Chỉ dán nội dung bạn thấy ổn khi gửi cho dịch vụ AI.', 'Paste a few messages/emails you wrote (200+ chars). Baochat creates a "My writing style" assistant. Only paste what you are comfortable sending to the AI provider.')}</p>
+                <textarea className="input min-h-[110px]" maxLength={12000} value={styleText} onChange={(e) => setStyleText(e.target.value)} placeholder={tr('Dán văn bản mẫu ở đây…', 'Paste sample text here…')} />
+                <button className="btn btn-primary" onClick={learnStyle} disabled={styleBusy || styleText.trim().length < 200}>{styleBusy ? tr('Đang phân tích…', 'Analyzing…') : tr('Phân tích & tạo trợ lý', 'Analyze & create assistant')}</button>
+              </div>
               {added.length > 0 && (
                 <>
                   <p className="mono-label pt-2">{tr('được chia sẻ với tôi', 'shared with me')}</p>

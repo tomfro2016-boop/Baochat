@@ -5,13 +5,14 @@ import { Loader2 } from 'lucide-react';
 import { useApp } from './Providers';
 import { fmtCountdown } from '@/lib/client/util';
 
+/** Dấu hiệu: chữ b dựng từ một thanh đứng và một vòng tròn, như thanh con trỏ cạnh một ô chat. */
 export function Logo({ size = 32, withText = true }: { size?: number; withText?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-2">
-      <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
-        <rect width="32" height="32" rx="7" fill="rgb(var(--primary))" />
-        <path d="M10 10.5l6 5.5-6 5.5" fill="none" stroke="rgb(var(--on-primary))" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-        <rect x="18" y="20" width="5" height="2.4" rx="0.6" fill="rgb(var(--on-primary))" />
+    <span className="group inline-flex items-center gap-2">
+      <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden className="transition-transform duration-200 group-hover:-rotate-6">
+        <rect width="32" height="32" rx="8" fill="rgb(var(--primary))" />
+        <rect x="9" y="6.5" width="3.6" height="19" rx="1.2" fill="rgb(var(--on-primary))" />
+        <circle cx="19" cy="18" r="4.6" fill="none" stroke="rgb(var(--on-primary))" strokeWidth="3.4" />
       </svg>
       {withText && <span className="text-base font-medium">Baochat</span>}
     </span>
@@ -107,7 +108,7 @@ export function Page({ title, subtitle, actions, children, wide = false }: { tit
           </div>
           {actions}
         </div>
-        {children}
+        <div className="stagger">{children}</div>
       </div>
     </div>
   );

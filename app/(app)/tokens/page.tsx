@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Infinity as InfinityIcon, Timer } from 'lucide-react';
+import CountUp from '@/components/fx/CountUp';
 import { Countdown, ErrorNote, Page, Spinner, Stat } from '@/components/ui';
 import { useApp, type TokenInfo } from '@/components/Providers';
 import { api } from '@/lib/client/api';
@@ -54,7 +56,7 @@ export default function TokensPage() {
               <div>
                 <p className="mono-label">{tr('còn lại', 'balance')}</p>
                 <p className="mt-2 flex flex-wrap items-baseline gap-x-3 font-mono text-3xl tabular-nums sm:text-4xl">
-                  {s.unlimited ? <InfinityIcon size={40} strokeWidth={1.5} className="text-primary" /> : fmtNum(s.balance)}
+                  {s.unlimited ? <InfinityIcon size={40} strokeWidth={1.5} className="text-primary" /> : <CountUp value={s.balance} />}
                   {!s.unlimited && <span className="text-base text-muted">/ {fmtNum(s.quota)}</span>}
                 </p>
               </div>
@@ -76,7 +78,7 @@ export default function TokensPage() {
             </div>
             {!s.unlimited && (
               <div className="mt-6 h-1 overflow-hidden rounded-sm bg-surface2">
-                <div className="h-full bg-primary transition-[width] duration-300" style={{ width: `${pct}%` }} />
+                <motion.div className="h-full bg-primary" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.9, ease: [0.2, 0, 0, 1] }} />
               </div>
             )}
             {!s.unlimited && (s.balance ?? 0) <= 0 && <p className="mt-3 text-sm text-danger">{tr('Bạn đã hết token, hãy chờ lần reset tiếp theo', "You're out of tokens, wait for the next reset")}</p>}
@@ -94,9 +96,9 @@ export default function TokensPage() {
               <p className="mt-4 text-sm text-muted">{tr('Chưa có dữ liệu tiêu thụ.', 'No usage yet.')}</p>
             ) : (
               <div className="mt-4 flex h-36 items-end gap-1.5">
-                {data.daily.map((d) => (
+                {data.daily.map((d, i) => (
                   <div key={d.day} className="group relative flex h-full flex-1 flex-col justify-end" title={`${d.day}: ${fmtNum(d.used)}`}>
-                    <div className="w-full rounded-t-sm bg-primary/60 transition-colors duration-150 group-hover:bg-primary" style={{ height: `${Math.max(4, (d.used / max) * 100)}%` }} />
+                    <motion.div className="w-full origin-bottom rounded-t-sm bg-primary/60 transition-colors duration-150 group-hover:bg-primary" style={{ height: `${Math.max(4, (d.used / max) * 100)}%` }} initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ duration: 0.5, delay: 0.2 + i * 0.03, ease: [0.2, 0, 0, 1] }} />
                     <span className="mt-1 text-center font-mono text-[10px] text-muted">{d.day.slice(8)}</span>
                   </div>
                 ))}

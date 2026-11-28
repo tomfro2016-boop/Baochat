@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowDown,
   ArrowUp,
+  ArrowUpRight,
   Check,
   ChevronDown,
   Copy,
@@ -29,6 +30,10 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import Markdown from './Markdown';
+import DotField from './fx/DotField';
+import Magnetic from './fx/Magnetic';
+import Scramble from './fx/Scramble';
+import { useSpotlight } from './fx/useSpotlight';
 import { Countdown, ErrorNote, Spinner } from './ui';
 import { useApp, type Mode } from './Providers';
 import { api, ApiErr, streamChat, type SseEvent } from '@/lib/client/api';
@@ -468,6 +473,7 @@ export default function ChatView() {
   ];
 
   const empty = msgs.length === 0 && !loadingConv;
+  const spot = useSpotlight();
 
   return (
     <div
@@ -503,6 +509,11 @@ export default function ChatView() {
 
       {/* Khu vực tin nhắn */}
       <div ref={scrollRef} onScroll={onScroll} className="relative min-h-0 flex-1 overflow-y-auto">
+        {empty && (
+          <div className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_25%,black,transparent)]">
+            <DotField />
+          </div>
+        )}
         <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
           {loadingConv && (
             <div className="flex justify-center py-20 text-muted">
@@ -511,9 +522,13 @@ export default function ChatView() {
           )}
 
           {empty && (
-            <div className="animate-rise pb-6 pt-6 sm:pt-16">
-              <p className="mono-label">{me?.user.displayName}</p>
-              <h1 className="mt-2 text-xl font-medium">{tr('Cuộc trò chuyện mới', 'New conversation')}</h1>
+            <div className="stagger relative pb-6 pt-6 sm:pt-20">
+              <p className="mono-label relative">{me?.user.displayName}</p>
+              <h1 className="relative mt-3 text-4xl font-medium leading-[1.1] sm:text-6xl">
+                <Scramble text={tr('Hỏi, tìm, viết, dựng', 'Ask, search, write, build')} />
+                <span className="cursor-block ml-2 !h-[0.8em] align-baseline" />
+              </h1>
+              <p className="relative mt-4 max-w-md text-sm text-muted">{tr('Một cuộc trò chuyện mới. Chọn một gợi ý bên dưới hoặc nhắn thẳng vào ô chat', 'A new conversation. Pick a prompt below or type in the box')}</p>
 
               {me?.announcements?.length ? (
                 <div className="mt-6 w-full space-y-2">
@@ -529,19 +544,20 @@ export default function ChatView() {
                 </div>
               ) : null}
 
-              <ol className="mt-10 divide-y divide-line border-y border-line">
+              <ol className="relative mt-10 divide-y divide-line border-y border-line">
                 {suggestions.map((s, n) => (
-                  <li key={s.t}>
+                  <li key={s.t} className="spot" onPointerMove={spot}>
                     <button
                       onClick={() => {
                         setInput(s.t);
                         if (s.search && me?.features.search) setSearch(true);
                         taRef.current?.focus();
                       }}
-                      className="group flex w-full items-baseline gap-4 py-3 text-left text-sm transition-colors duration-150"
+                      className="group relative flex w-full items-baseline gap-4 px-2 py-3 text-left text-sm transition-colors duration-150"
                     >
-                      <span className="font-mono text-xs text-muted">{String(n + 1).padStart(2, '0')}</span>
-                      <span className="text-muted transition-colors duration-150 group-hover:text-ink">{s.t}</span>
+                      <span className="font-mono text-xs text-muted transition-colors duration-150 group-hover:text-primary">{String(n + 1).padStart(2, '0')}</span>
+                      <span className="flex-1 text-muted transition-[color,transform] duration-200 group-hover:translate-x-1 group-hover:text-ink">{s.t}</span>
+                      <ArrowUpRight size={14} strokeWidth={1.5} className="self-center text-muted opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100" />
                     </button>
                   </li>
                 ))}
@@ -708,7 +724,7 @@ export default function ChatView() {
                   uploadFiles(files);
                 }
               }}
-              placeholder={outOfTokens ? tr('Đang chờ reset token…', 'Waiting for token reset…') : tr('Nhắn cho Baochat. Enter để gửi, Shift+Enter xuống dòng', 'Message Baochat. Enter to send, Shift+Enter for new line')}
+              placeholder={outOfTokens ? tr('Đang chờ reset token…', 'Waiting for token reset…') : tr('Nhắn cho Baochat', 'Message Baochat')}
               disabled={outOfTokens}
               maxLength={30000}
               className="block max-h-[220px] w-full resize-none bg-transparent px-4 pb-1 pt-3.5 text-[15px] leading-6 outline-none placeholder:text-muted disabled:opacity-60"
@@ -745,14 +761,19 @@ export default function ChatView() {
               <Link href="/studio" className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs text-muted transition-colors duration-150 hover:bg-surface2 hover:text-ink">
                 <Wand2 size={15} strokeWidth={1.5} /> Studio
               </Link>
-              <div className="ml-auto">
+              <div className="ml-auto hidden items-center gap-1 pr-2 text-[11px] text-muted sm:flex">
+                <kbd>Enter</kbd> {tr('gửi', 'send')}
+                <kbd className="ml-2">Shift</kbd>+<kbd>Enter</kbd>
+              </div>
+              <div>
                 {busy ? (
                   <button className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-surface2 text-ink transition-colors hover:bg-line" onClick={stop} aria-label={tr('Dừng', 'Stop')} title={tr('Dừng', 'Stop')}>
                     <Square size={13} fill="currentColor" />
                   </button>
                 ) : (
+                  <Magnetic>
                   <button
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary text-[rgb(var(--on-primary))] transition-colors duration-150 hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary text-[rgb(var(--on-primary))] transition-[background-color,transform] duration-150 hover:bg-accent active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                     onClick={send}
                     disabled={(!input.trim() && !pending.length) || uploading > 0 || outOfTokens}
                     aria-label={tr('Gửi', 'Send')}
@@ -760,6 +781,7 @@ export default function ChatView() {
                   >
                     <ArrowUp size={16} strokeWidth={2} />
                   </button>
+                  </Magnetic>
                 )}
               </div>
             </div>

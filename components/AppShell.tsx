@@ -1,19 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, Coins, LogOut, Menu, Pencil, Plus, Search, Settings, Shield, SlidersHorizontal, Trash2, Wand2, X } from 'lucide-react';
+import { Check, Coins, LogOut, Menu, Moon, Pencil, Plus, Search, Settings, Shield, SlidersHorizontal, Sun, Trash2, Wand2, X } from 'lucide-react';
 import { Avatar, Countdown, Logo, Spinner } from './ui';
+import CountUp from './fx/CountUp';
+import CommandPalette from './CommandPalette';
 import { useApp } from './Providers';
 import { api } from '@/lib/client/api';
-import { fmtNum, timeAgo } from '@/lib/client/util';
+import { timeAgo } from '@/lib/client/util';
 
 type Conv = { id: string; title: string; updated_at: string };
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const { me, tr, lang, convVersion, bumpConvs } = useApp();
+  const { me, tr, lang, convVersion, bumpConvs, theme, setTheme } = useApp();
+  const gid = useId();
   const pathname = usePathname();
   const router = useRouter();
   const [convs, setConvs] = useState<Conv[] | null>(null);
@@ -73,7 +76,11 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         </Link>
         <div className="relative mt-2">
           <Search size={14} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-          <input className="input !bg-transparent pl-9" placeholder={tr('Tìm cuộc trò chuyện…', 'Search conversations…')} value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input className="input !bg-transparent pl-9 pr-16" placeholder={tr('Tìm cuộc trò chuyện', 'Search conversations')} value={query} onChange={(e) => setQuery(e.target.value)} />
+          <span className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 gap-1 lg:flex">
+            <kbd>Ctrl</kbd>
+            <kbd>K</kbd>
+          </span>
         </div>
       </div>
 
@@ -109,10 +116,11 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                   <Link
                     href={`/c/${c.id}`}
                     onClick={onNavigate}
-                    className={`block rounded-md px-3 py-2 pr-16 text-sm transition-colors duration-150 ${activeId === c.id ? 'bg-surface2 text-ink' : 'text-muted hover:bg-surface hover:text-ink'}`}
+                    className={`relative block rounded-md px-3 py-2 pr-16 text-sm transition-colors duration-150 ${activeId === c.id ? 'text-ink' : 'text-muted hover:bg-surface hover:text-ink'}`}
                   >
-                    <span className="block truncate">{c.title}</span>
-                    <span className="block font-mono text-[11px] opacity-70">{timeAgo(c.updated_at, lang)}</span>
+                    {activeId === c.id && <motion.span layoutId={`conv-${gid}`} className="absolute inset-0 rounded-md bg-surface2" transition={{ type: 'spring', stiffness: 500, damping: 40 }} />}
+                    <span className="relative block truncate">{c.title}</span>
+                    <span className="relative block font-mono text-[11px] opacity-70">{timeAgo(c.updated_at, lang)}</span>
                   </Link>
                   <div className="absolute right-1.5 top-1/2 hidden -translate-y-1/2 gap-0.5 group-hover:flex max-lg:flex">
                     <button
@@ -140,8 +148,9 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         {nav.map((n) => {
           const active = pathname === n.href || pathname.startsWith(n.href + '/');
           return (
-            <Link key={n.href} href={n.href} onClick={onNavigate} className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors duration-150 ${active ? 'bg-surface2 text-ink' : 'text-muted hover:bg-surface hover:text-ink'}`}>
-              <n.icon size={16} strokeWidth={1.5} className={active ? 'text-primary' : ''} /> {n.label}
+            <Link key={n.href} href={n.href} onClick={onNavigate} className={`relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors duration-150 ${active ? 'text-ink' : 'text-muted hover:bg-surface hover:text-ink'}`}>
+              {active && <motion.span layoutId={`nav-${gid}`} className="absolute inset-0 rounded-md bg-surface2" transition={{ type: 'spring', stiffness: 500, damping: 40 }} />}
+              <n.icon size={16} strokeWidth={1.5} className={`relative ${active ? 'text-primary' : ''}`} /> <span className="relative">{n.label}</span>
             </Link>
           );
         })}
@@ -152,10 +161,10 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           <Link href="/tokens" onClick={onNavigate} className="mb-4 block rounded-md border border-line px-3 py-2 transition-colors duration-150 hover:border-primary">
             <div className="flex items-baseline justify-between">
               <span className="mono-label">token</span>
-              <span className="font-mono text-sm tabular-nums">{t?.unlimited ? '∞' : fmtNum(t?.balance)}</span>
+              <span className="font-mono text-sm">{t?.unlimited ? '∞' : <CountUp value={t?.balance} />}</span>
             </div>
             <div className="mt-2 h-px bg-line">
-              <div className="h-px bg-primary" style={{ width: `${pct}%` }} />
+              <motion.div className="h-px bg-primary" initial={false} animate={{ width: `${pct}%` }} transition={{ duration: 0.6, ease: [0.2, 0, 0, 1] }} />
             </div>
             {t && !t.unlimited && (t.balance ?? 0) <= 0 && (
               <p className="mt-2 font-mono text-[11px] text-danger">
@@ -163,12 +172,19 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               </p>
             )}
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
             <Avatar name={me.user.displayName} url={me.user.avatarUrl} size={34} />
-            <div className="min-w-0 flex-1">
+            <div className="ml-3 min-w-0 flex-1">
               <p className="truncate text-sm">{me.user.displayName}</p>
               <p className="truncate font-mono text-[11px] text-muted">{me.user.publicId}</p>
             </div>
+            <button className="icon-btn" aria-label={tr('Đổi giao diện sáng tối', 'Toggle theme')} title={tr('Đổi giao diện sáng tối', 'Toggle theme')} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span key={theme} initial={{ rotate: -60, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 60, opacity: 0 }} transition={{ duration: 0.15 }} className="inline-flex">
+                  {theme === 'dark' ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
+                </motion.span>
+              </AnimatePresence>
+            </button>
             <button
               className="icon-btn"
               aria-label={tr('Đăng xuất', 'Sign out')}
@@ -249,6 +265,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </header>
         <main className="min-h-0 flex-1">{children}</main>
       </div>
+      <CommandPalette />
     </div>
   );
 }

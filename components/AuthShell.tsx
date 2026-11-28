@@ -4,25 +4,33 @@ import Link from 'next/link';
 import { Languages, Moon, Sun } from 'lucide-react';
 import { Logo } from './ui';
 import { useApp } from './Providers';
+import DotField from './fx/DotField';
+import Magnetic from './fx/Magnetic';
+import Scramble from './fx/Scramble';
 
 export default function AuthShell({ title, subtitle, children, footer }: { title: string; subtitle?: string; children: React.ReactNode; footer?: React.ReactNode }) {
   const { lang, setLang, theme, setTheme } = useApp();
   return (
     <main className="grid min-h-screen lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
       {/* Cột trái: một đoạn hội thoại mẫu, đủ để nhận ra đây là chat AI */}
-      <aside className="relative hidden flex-col justify-between border-r border-line bg-surface px-12 py-10 lg:flex">
-        <Link href="/">
-          <Logo size={28} />
-        </Link>
-        <div className="space-y-6">
-          <div className="ml-auto max-w-[80%] rounded-md border border-line bg-bg px-4 py-3 text-sm">{lang === 'vi' ? 'Tóm tắt giúp mình file hợp đồng này trong năm dòng' : 'Summarize this contract in five lines'}</div>
+      <aside className="relative hidden flex-col justify-between overflow-hidden border-r border-line bg-surface px-12 py-10 lg:flex">
+        <div className="absolute inset-0 [mask-image:radial-gradient(ellipse_80%_70%_at_30%_60%,black,transparent)]">
+          <DotField />
+        </div>
+        <Magnetic className="relative self-start">
+          <Link href="/">
+            <Logo size={28} />
+          </Link>
+        </Magnetic>
+        <div className="relative space-y-6">
+          <div className="ml-auto max-w-[80%] animate-rise rounded-md border border-line bg-bg px-4 py-3 text-sm">{lang === 'vi' ? 'Tóm tắt giúp mình file hợp đồng này trong năm dòng' : 'Summarize this contract in five lines'}</div>
           <div className="max-w-[88%] text-sm leading-7 text-muted">
             <span className="mono-label mb-1 block">baochat</span>
-            {lang === 'vi' ? 'Hợp đồng thuê văn phòng 12 tháng, giá 18 triệu mỗi tháng, đặt cọc hai tháng. Điều 7 cho phép chấm dứt sớm với thông báo trước 30 ngày' : 'A 12-month office lease at 18 million a month with a two-month deposit. Clause 7 allows early termination with 30 days notice'}
+            <Scramble duration={2.2} delay={0.7} text={lang === 'vi' ? 'Hợp đồng thuê văn phòng 12 tháng, giá 18 triệu mỗi tháng, đặt cọc hai tháng. Điều 7 cho phép chấm dứt sớm với thông báo trước 30 ngày' : 'A 12-month office lease at 18 million a month with a two-month deposit. Clause 7 allows early termination with 30 days notice'} />
             <span className="cursor-block ml-1" />
           </div>
         </div>
-        <p className="mono-label">{lang === 'vi' ? 'Trò chuyện, tìm kiếm, tạo tài liệu' : 'Chat, search, make documents'}</p>
+        <p className="mono-label relative">{lang === 'vi' ? 'Trò chuyện, tìm kiếm, tạo tài liệu' : 'Chat, search, make documents'}</p>
       </aside>
 
       <section className="relative flex items-center justify-center px-4 py-10">

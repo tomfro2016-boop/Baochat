@@ -195,14 +195,16 @@ export default function ChatView() {
   const [mode, setMode] = useState<Mode>('casual');
   const [modelId, setModelId] = useState<string>('auto');
   const [preset, setPresetState] = useState<string>('none');
+  const [myAssistants, setMyAssistants] = useState<{ id: string; name: string }[]>([]);
   const [listening, setListening] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const recRef = useRef<any>(null);
   useEffect(() => {
     try {
       const v = localStorage.getItem('bc_preset');
-      if (v && PRESETS.some((p) => p.id === v)) setPresetState(v);
+      if (v && (PRESETS.some((p) => p.id === v) || v.startsWith('a:'))) setPresetState(v);
     } catch {}
+    api<{ assistants: { id: string; name: string }[] }>('/api/assistants').then((d) => setMyAssistants(d.assistants)).catch(() => {});
   }, []);
   const setPreset = (v: string) => {
     setPresetState(v);
@@ -378,7 +380,8 @@ export default function ChatView() {
             search,
             mode,
             modelId: modelId === 'auto' ? null : modelId,
-            preset: preset === 'none' ? null : preset,
+            preset: preset === 'none' || preset.startsWith('a:') ? null : preset,
+            assistantId: preset.startsWith('a:') ? preset.slice(2) : null,
             editMessageId: opts.editMessageId,
           },
           (e: SseEvent) => {
@@ -731,7 +734,7 @@ export default function ChatView() {
           value={preset}
           onChange={setPreset}
           icon={<UserRound size={14} strokeWidth={1.5} className="text-muted" />}
-          options={[{ id: 'none', label: tr('Trợ lý chung', 'General') }, ...PRESETS.map((p) => ({ id: p.id as string, label: tr(p.vi, p.en) }))]}
+          options={[{ id: 'none', label: tr('Trợ lý chung', 'General') }, ...PRESETS.map((p) => ({ id: p.id as string, label: tr(p.vi, p.en) })), ...myAssistants.map((a) => ({ id: `a:${a.id}`, label: a.name }))]}
         />
         {msgs.length > 0 && (
           <button type="button" className="icon-btn" onClick={exportMd} title={tr('Tải cuộc trò chuyện (.md)', 'Download conversation (.md)')} aria-label={tr('Tải cuộc trò chuyện', 'Download conversation')}>

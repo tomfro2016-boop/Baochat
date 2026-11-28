@@ -77,7 +77,7 @@ export async function buildDocx(title: string, p: DocumentPayload): Promise<Buil
         children.push(new Paragraph({ children: runs(b.runs), spacing: { after: 140, line: 300 } }));
         break;
       case 'quote':
-        children.push(new Paragraph({ children: runs(b.runs, { italics: true }), indent: { left: 480 }, border: { left: { style: BorderStyle.SINGLE, size: 12, color: '7867FF', space: 8 } }, spacing: { after: 140 } }));
+        children.push(new Paragraph({ children: runs(b.runs, { italics: true }), indent: { left: 480 }, border: { left: { style: BorderStyle.SINGLE, size: 12, color: 'D98A0B', space: 8 } }, spacing: { after: 140 } }));
         break;
       case 'ul':
         for (const it of b.items) children.push(new Paragraph({ children: runs(it), numbering: { reference: 'bullets', level: 0 }, spacing: { after: 60 } }));
@@ -163,7 +163,7 @@ export async function buildPdf(title: string, p: DocumentPayload): Promise<Built
   const writeRuns = (rs: Run[], size: number, opts: { indent?: number; base?: 'R' | 'B' | 'I'; width?: number; color?: string } = {}) => {
     const x = doc.page.margins.left + (opts.indent || 0);
     rs.forEach((r, i) => {
-      doc.font(fontFor(r, opts.base)).fontSize(r.code ? size - 1 : size).fillColor(opts.color || '#1B1D27');
+      doc.font(fontFor(r, opts.base)).fontSize(r.code ? size - 1 : size).fillColor(opts.color || '#1C1A16');
       const last = i === rs.length - 1;
       if (i === 0) doc.text(r.text, x, doc.y, { width: opts.width ?? W - (opts.indent || 0), continued: !last, lineGap: 3 });
       else doc.text(r.text, { continued: !last, lineGap: 3 });
@@ -171,9 +171,9 @@ export async function buildPdf(title: string, p: DocumentPayload): Promise<Built
   };
 
   // Tiêu đề tài liệu
-  doc.font('B').fontSize(22).fillColor('#5B4BDB').text(title, { width: W });
+  doc.font('B').fontSize(22).fillColor('#B26F00').text(title, { width: W });
   doc.moveDown(0.3);
-  doc.moveTo(doc.page.margins.left, doc.y).lineTo(doc.page.margins.left + W, doc.y).lineWidth(1.5).strokeColor('#A99CFF').stroke();
+  doc.moveTo(doc.page.margins.left, doc.y).lineTo(doc.page.margins.left + W, doc.y).lineWidth(1.5).strokeColor('#F0A528').stroke();
   doc.moveDown(0.8);
 
   for (const b of parseMarkdown(p.markdown)) {
@@ -182,7 +182,7 @@ export async function buildPdf(title: string, p: DocumentPayload): Promise<Built
         const size = [20, 16, 13.5, 12][b.level - 1];
         ensure(size * 3);
         doc.moveDown(0.5);
-        writeRuns(b.runs, size, { base: 'B', color: b.level === 1 ? '#5B4BDB' : '#1B1D27' });
+        writeRuns(b.runs, size, { base: 'B', color: b.level === 1 ? '#B26F00' : '#1C1A16' });
         doc.moveDown(0.3);
         break;
       }
@@ -201,7 +201,7 @@ export async function buildPdf(title: string, p: DocumentPayload): Promise<Built
         b.items.forEach((it, n) => {
           ensure(24);
           const y = doc.y;
-          doc.font('R').fontSize(10.5).fillColor('#5B4BDB').text(b.t === 'ul' ? '•' : `${n + 1}.`, doc.page.margins.left + 4, y, { width: 20 });
+          doc.font('R').fontSize(10.5).fillColor('#B26F00').text(b.t === 'ul' ? '•' : `${n + 1}.`, doc.page.margins.left + 4, y, { width: 20 });
           doc.y = y;
           writeRuns(it, 10.5, { indent: 26 });
           doc.moveDown(0.25);
@@ -215,7 +215,7 @@ export async function buildPdf(title: string, p: DocumentPayload): Promise<Built
         ensure(Math.min(h, 200));
         const y = doc.y;
         doc.roundedRect(doc.page.margins.left, y, W, h, 4).fill('#F1F1F6');
-        doc.fillColor('#1B1D27').text(text, doc.page.margins.left + 8, y + 7, { width: W - 16 });
+        doc.fillColor('#1C1A16').text(text, doc.page.margins.left + 8, y + 7, { width: W - 16 });
         doc.y = y + h + 8;
         break;
       }
@@ -230,8 +230,8 @@ export async function buildPdf(title: string, p: DocumentPayload): Promise<Built
           const y = doc.y;
           Array.from({ length: cols }).forEach((_, ci) => {
             const x = doc.page.margins.left + ci * cw;
-            doc.rect(x, y, cw, rh).lineWidth(0.5).strokeColor('#C9CBD6').fillAndStroke(ri === 0 ? '#EDEBFF' : '#FFFFFF', '#C9CBD6');
-            doc.fillColor('#1B1D27').text(plainText(r[ci] || []), x + 5, y + 5, { width: cw - 10 });
+            doc.rect(x, y, cw, rh).lineWidth(0.5).strokeColor('#C9CBD6').fillAndStroke(ri === 0 ? '#FBF0DA' : '#FFFFFF', '#C9CBD6');
+            doc.fillColor('#1C1A16').text(plainText(r[ci] || []), x + 5, y + 5, { width: cw - 10 });
           });
           doc.y = y + rh;
         });
@@ -258,9 +258,9 @@ export async function buildPptx(p: PresentationPayload, images: { mime: string; 
   pptx.title = p.deck.title;
   pptx.author = 'Baochat';
 
-  const DARK = '0B0D12';
-  const PRIMARY = '7867FF';
-  const ACCENT = 'A99CFF';
+  const DARK = '11100E';
+  const PRIMARY = 'F0A528';
+  const ACCENT = 'F7C766';
 
   // Slide tiêu đề
   const s0 = pptx.addSlide();
@@ -274,7 +274,7 @@ export async function buildPptx(p: PresentationPayload, images: { mime: string; 
     const s = pptx.addSlide();
     s.background = { color: 'FFFFFF' };
     s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 0.12, fill: { color: PRIMARY } });
-    s.addText(sl.title, { x: 0.6, y: 0.4, w: 12.1, h: 0.9, fontFace: 'Calibri', fontSize: 30, bold: true, color: '1B1D27', valign: 'middle' });
+    s.addText(sl.title, { x: 0.6, y: 0.4, w: 12.1, h: 0.9, fontFace: 'Calibri', fontSize: 30, bold: true, color: '1C1A16', valign: 'middle' });
     s.addShape(pptx.ShapeType.rect, { x: 0.6, y: 1.3, w: 1.2, h: 0.06, fill: { color: ACCENT } });
 
     const img = images[idx];
@@ -310,7 +310,7 @@ export async function buildXlsx(p: SpreadsheetPayload): Promise<BuiltFile> {
     ws.addRow(sh.columns);
     const head = ws.getRow(1);
     head.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    head.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF7867FF' } };
+    head.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD98A0B' } };
     head.alignment = { vertical: 'middle' };
     for (const r of sh.rows) {
       ws.addRow(r.map((v) => (typeof v === 'string' && v.startsWith('=') && v.length > 1 ? { formula: v.slice(1) } : v)));

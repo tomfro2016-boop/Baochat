@@ -27,6 +27,7 @@ const schema = z.object({
   mode: z.enum(['serious', 'casual', 'funny', 'playful']).optional(),
   modelId: z.string().max(80).nullable().optional(),
   preset: z.enum(PRESET_IDS).nullable().optional(),
+  assistantId: z.string().uuid().nullable().optional(),
   editMessageId: z.string().uuid().optional(),
 });
 
@@ -175,6 +176,8 @@ export const POST = handler(async (req) => {
   const models = orderModels(available, b.modelId ?? conv.model_id ?? s.default_model, needVision);
   if (!models.length) throw new ApiError(400, 'Chưa có model hỗ trợ hình ảnh được bật. Hãy bật model có Vision trong Admin.', { code: 'NO_VISION_MODEL' });
 
+  const customRow = b.assistantId ? await q1<{ instructions: string }>('SELECT instructions FROM assistants WHERE id = $1 AND user_id = $2', [b.assistantId, user.id]) : null;
+
   const encoder = new TextEncoder();
   const ip = clientIp(req);
   const stream = new ReadableStream({
@@ -212,6 +215,7 @@ export const POST = handler(async (req) => {
         withSearch: b.search,
         searchContext,
         preset: b.preset ?? null,
+        customRole: customRow?.instructions ?? null,
       });
       const full: ChatMsg[] = [{ role: 'system', content: system }, ...chatMsgs];
       const estIn = estimateTokens(full.map((m) => m.content).join('\n')) + (needVision ? 800 : 0);

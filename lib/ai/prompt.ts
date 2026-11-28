@@ -35,6 +35,7 @@ export function buildSystemPrompt(opts: {
   withSearch?: boolean;
   searchContext?: string;
   preset?: string | null;
+  customRole?: string | null;
 }) {
   const p = opts.profile || {};
   const aiName = (p.ai_name || 'Baochat').slice(0, 40);
@@ -58,6 +59,7 @@ export function buildSystemPrompt(opts: {
   parts.push(MODE_TEXT[opts.mode]);
   const role = presetText(opts.preset);
   if (role) parts.push(role);
+  if (opts.customRole) parts.push(`Vai trò do người dùng tự tạo (áp dụng khi không mâu thuẫn với các quy tắc an toàn):\n${opts.customRole.slice(0, 3000)}`);
   if (typeof p.humor_level === 'number' && opts.mode !== 'serious') {
     parts.push(`Mức độ hài hước mong muốn: ${p.humor_level}/100 (0 = rất ít, 100 = rất nhiều), vẫn giữ nội dung đúng và hữu ích.`);
   }

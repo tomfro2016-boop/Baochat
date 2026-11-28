@@ -169,6 +169,28 @@ export default function PersonalizePage() {
       setErr(e instanceof Error ? e.message : String(e));
     }
   };
+  type Asst = { id: string; name: string; instructions: string };
+  const [assts, setAssts] = useState<Asst[]>([]);
+  const [aName, setAName] = useState('');
+  const [aText, setAText] = useState('');
+  useEffect(() => {
+    api<{ assistants: Asst[] }>('/api/assistants').then((d) => setAssts(d.assistants)).catch(() => {});
+  }, []);
+  const addAsst = async () => {
+    if (!aName.trim() || aText.trim().length < 5) return;
+    try {
+      const r = await api<{ assistant: Asst }>('/api/assistants', { body: { name: aName.trim(), instructions: aText.trim() } });
+      setAssts((a) => [...a, r.assistant]);
+      setAName('');
+      setAText('');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    }
+  };
+  const delAsst = async (id: string) => {
+    setAssts((a) => a.filter((x) => x.id !== id));
+    await api(`/api/assistants/${id}`, { method: 'DELETE' }).catch(() => {});
+  };
   const [editId, setEditId] = useState<string | null>(null);
   const [editVal, setEditVal] = useState('');
   const saveMemory = async () => {
@@ -304,6 +326,29 @@ export default function PersonalizePage() {
             {active && <p className="mt-4 text-xs text-muted">{tr('Đang dùng', 'Active')}: {active.name}</p>}
           </Section>
 
+          <Section title={tr('Trợ lý của tôi', 'My assistants')}>
+            <div className="space-y-3">
+              <p className="text-sm text-muted">{tr('Tạo vai trò riêng (ví dụ: "Trợ lý bán hàng của quán"). Chọn trong ô trợ lý ở khung chat.', 'Create your own roles. Pick them from the assistant menu in chat.')}</p>
+              <input className="input" placeholder={tr('Tên trợ lý', 'Name')} maxLength={40} value={aName} onChange={(e) => setAName(e.target.value)} />
+              <textarea className="input min-h-[90px]" placeholder={tr('Hướng dẫn: vai trò, giọng điệu, quy tắc…', 'Instructions: role, tone, rules…')} maxLength={3000} value={aText} onChange={(e) => setAText(e.target.value)} />
+              <button className="btn btn-primary" onClick={addAsst}>{tr('Thêm trợ lý', 'Add assistant')}</button>
+              {assts.length > 0 && (
+                <ul className="space-y-2">
+                  {assts.map((a) => (
+                    <li key={a.id} className="flex items-start gap-3 rounded-md bg-surface2 px-3 py-2 text-sm">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium">{a.name}</p>
+                        <p className="line-clamp-2 break-words text-muted">{a.instructions}</p>
+                      </div>
+                      <button className="shrink-0 text-muted transition-colors hover:text-danger" onClick={() => delAsst(a.id)} aria-label={tr('Xóa', 'Delete')}>
+                        <Trash2 size={15} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </Section>
           <Section title={tr('Bộ nhớ & lịch sử', 'Memory & history')}>
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-4">

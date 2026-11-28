@@ -476,25 +476,142 @@ export default function ChatView() {
     rec.start();
   };
 
-  // Đọc to câu trả lời bằng giọng của trình duyệt
-  const speak = (m: Msg) => {
+  // Đọc to câu trả lời: chọn giọng đúng ngôn ngữ, đọc từng câu để không bị ngắt giữa chừng
+  const pickVoice = (tag: string) => {
+    const pre = tag.slice(0, 2).toLowerCase();
+    const list = window.speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith(pre));
+    return (
+      list.find((v) => /natural|online/i.test(v.name)) ||
+      list.find((v) => /google/i.test(v.name)) ||
+      list.find((v) => v.lang.toLowerCase() === tag.toLowerCase()) ||
+      list[0] ||
+      null
+    );
+  };
+  useEffect(() => {
     if (!('speechSynthesis' in window)) return;
-    if (speakingId === m.id) {
-      window.speechSynthesis.cancel();
-      setSpeakingId(null);
+    window.speechSynthesis.getVoices();
+    const h = () => window.speechSynthesis.getVoices();
+    window.speechSynthesis.addEventListener('voiceschanged', h);
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', h);
+  }, []);
+
+  const speakBrowser = (m: Msg) => {
+    if (!('speechSynthesis' in window)) {
+      alert(tr('Trình duyệt này không hỗ trợ đọc to', 'This browser does not support read aloud'));
       return;
     }
     window.speechSynthesis.cancel();
-    const plain = m.content.replace(/```[\s\S]*?```/g, ' ').replace(/[*_`#>\[\]]/g, '').slice(0, 4000);
-    const u = new SpeechSynthesisUtterance(plain);
-    u.lang = lang === 'vi' ? 'vi-VN' : 'en-US';
-    u.onend = () => setSpeakingId(null);
-    u.onerror = () => setSpeakingId(null);
+    const tag = lang === 'vi' ? 'vi-VN' : 'en-US';
+    const voice = pickVoice(tag);
+    if (!voice) {
+      alert(
+        lang === 'vi'
+          ? 'Máy của bạn chưa có giọng đọc tiếng Việt nên đọc sẽ sai. Cách xử lý: dùng trình duyệt Microsoft Edge (có giọng "HoaiMy" tiếng Việt tự nhiên), hoặc trên Windows vào Cài đặt, Thời gian và ngôn ngữ, Giọng nói, Thêm giọng nói, chọn Tiếng Việt'
+          : 'No English voice found on this device',
+      );
+      return;
+    }
+    const plain = m.content
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/\[(\d+)\]/g, '')
+      .replace(/[*_`#>\[\]|]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 5000);
+    const chunks = plain.match(/[^.!?;\n]+[.!?;]?/g)?.map((x) => x.trim()).filter(Boolean) ?? [plain];
     setSpeakingId(m.id);
-    window.speechSynthesis.speak(u);
+    chunks.forEach((c, i) => {
+      const u = new SpeechSynthesisUtterance(c);
+      u.voice = voice;
+      u.lang = voice.lang;
+      u.rate = 0.95;
+      if (i === chunks.length - 1) u.onend = () => setSpeakingId(null);
+      u.onerror = () => setSpeakingId(null);
+      window.speechSynthesis.speak(u);
+    });
   };
+  // Giọng Gemini (có biểu cảm theo tính cách chat). Lỗi hoặc hết lượt thì quay về giọng trình duyệt.
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const ttsRef = useRef<{ stop: boolean } | null>(null);
+  const stopSpeaking = () => {
+    if (ttsRef.current) ttsRef.current.stop = true;
+    audioRef.current?.pause();
+    audioRef.current = null;
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    setSpeakingId(null);
+  };
+
+  const speak = async (m: Msg) => {
+    if (speakingId === m.id) {
+      stopSpeaking();
+      return;
+    }
+    stopSpeaking();
+    const plain = m.content
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/\[(\d+)\]/g, '')
+      .replace(/[*_`#>\[\]|]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 3600);
+    if (!plain) return;
+    // Cắt theo câu, mỗi đoạn tối đa khoảng 450 ký tự
+    const chunks: string[] = [];
+    let cur = '';
+    for (const sent of plain.match(/[^.!?;]+[.!?;]*\s*/g) ?? [plain]) {
+      if ((cur + sent).length > 450 && cur) {
+        chunks.push(cur.trim());
+        cur = '';
+      }
+      cur += sent;
+    }
+    if (cur.trim()) chunks.push(cur.trim());
+
+    const token = { stop: false };
+    ttsRef.current = token;
+    setSpeakingId(m.id);
+    let fellBack = false;
+    const fetchChunk = async (text: string) => {
+      const res = await fetch('/api/tts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text, lang, mode }), signal: undefined });
+      if (!res.ok) throw new Error(String(res.status));
+      return res.blob();
+    };
+    try {
+      let next = fetchChunk(chunks[0]);
+      for (let i = 0; i < chunks.length; i++) {
+        const blob = await next;
+        if (token.stop) return;
+        if (i + 1 < chunks.length) {
+          next = fetchChunk(chunks[i + 1]);
+          next.catch(() => {});
+        }
+        await new Promise<void>((resolve, reject) => {
+          const url = URL.createObjectURL(blob);
+          const a = new Audio(url);
+          audioRef.current = a;
+          a.onended = () => {
+            URL.revokeObjectURL(url);
+            resolve();
+          };
+          a.onerror = () => reject(new Error('audio'));
+          a.play().catch(reject);
+        });
+        if (token.stop) return;
+      }
+    } catch {
+      if (!token.stop) {
+        fellBack = true;
+        speakBrowser(m);
+      }
+    } finally {
+      if (!fellBack && ttsRef.current === token) setSpeakingId(null);
+    }
+  };
+
   useEffect(() => () => {
     recRef.current?.stop?.();
+    audioRef.current?.pause();
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel();
   }, []);
 

@@ -53,9 +53,11 @@ export const POST = handler(async (req) => {
   if (!key) throw new ApiError(503, 'Chưa cấu hình khóa Gemini');
   const b = await parseBody(req, schema, 20_000);
 
-  const style = (b.lang === 'vi' ? STYLE_VI : STYLE_EN)[b.mode];
+  const lang: 'vi' | 'en' = b.lang === 'en' ? 'en' : 'vi';
+  const mode: string = b.mode ?? 'casual';
+  const style = (lang === 'vi' ? STYLE_VI : STYLE_EN)[mode] ?? (lang === 'vi' ? STYLE_VI : STYLE_EN).casual;
   const prompt =
-    b.lang === 'vi'
+    lang === 'vi'
       ? `Hãy đọc đoạn văn sau bằng tiếng Việt chuẩn, phát âm rõ dấu, ${style}. Biểu cảm theo nội dung: vui khi tin vui, trầm khi nghiêm túc, tò mò khi là câu hỏi. Chỉ đọc đoạn văn, không đọc lại chỉ dẫn này:\n\n${b.text}`
       : `Read the following text aloud ${style}. Match the emotion to the content. Only read the text, not these instructions:\n\n${b.text}`;
 
@@ -72,7 +74,7 @@ export const POST = handler(async (req) => {
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             responseModalities: ['AUDIO'],
-            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE[b.mode] } } },
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE[mode] ?? 'Zephyr' } } },
           },
         }),
         signal: ctl.signal,

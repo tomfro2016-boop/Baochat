@@ -31,7 +31,8 @@ const schema = z.object({
 });
 
 const HISTORY_CHAR_BUDGET = 60_000;
-const FILE_TEXT_BUDGET = 14_000;
+const FILE_TEXT_BUDGET = 30_000;
+const FILE_TOTAL_BUDGET = 45_000;
 
 type AttachmentRef = { id: string; name: string; mime: string; size: number };
 
@@ -151,6 +152,7 @@ export const POST = handler(async (req) => {
   const chatMsgs: ChatMsg[] = history.map((m, i) => {
     let content = m.content;
     const images: ChatMsg['images'] = [];
+    let fileLeft = FILE_TOTAL_BUDGET;
     for (const a of m.attachments || []) {
       const f = fileMap.get(a.id);
       if (!f) continue;
@@ -158,7 +160,11 @@ export const POST = handler(async (req) => {
         if (i === lastUserIdx) images.push({ mime: f.mime, b64: f.data.toString('base64') });
         else content += `\n[Đã gửi hình ảnh: ${f.name}]`;
       } else if (f.extracted_text) {
-        content += `\n\n[Tệp đính kèm: ${f.name}]\n${f.extracted_text.slice(0, FILE_TEXT_BUDGET)}`;
+        const lim = Math.max(0, Math.min(FILE_TEXT_BUDGET, fileLeft));
+        const part = f.extracted_text.slice(0, lim);
+        fileLeft -= part.length;
+        const cut = f.extracted_text.length > part.length ? `\n[… đã cắt bớt, tệp còn dài hơn (${f.extracted_text.length} ký tự)]` : '';
+        content += `\n\n[Tệp đính kèm: ${f.name}]\n${part}${cut}`;
       } else {
         content += `\n\n[Tệp đính kèm: ${f.name} - không đọc được nội dung]`;
       }

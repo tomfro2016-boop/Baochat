@@ -13,6 +13,7 @@ import {
   Copy,
   Cpu,
   Download,
+  Link2,
   FileText,
   Globe,
   Megaphone,
@@ -632,6 +633,25 @@ export default function ChatView() {
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   };
 
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  useEffect(() => { setShareUrl(null); }, [convId]);
+  const shareConv = async () => {
+    if (!convId) return;
+    try {
+      const r = await api<{ token: string }>(`/api/share/${convId}`, { method: 'POST' });
+      const url = `${window.location.origin}/s/${r.token}`;
+      setShareUrl(url);
+      try { await navigator.clipboard.writeText(url); } catch { /* người dùng tự sao chép */ }
+    } catch (e: any) {
+      setError(e?.message || tr('Không tạo được liên kết.', 'Could not create link.'));
+    }
+  };
+  const unshare = async () => {
+    if (!convId) return;
+    try { await api(`/api/share/${convId}`, { method: 'DELETE' }); } catch { /* bỏ qua */ }
+    setShareUrl(null);
+  };
+
   const saveEdit = () => {
     if (!editing) return;
     const orig = msgs.find((m) => m.id === editing.id);
@@ -717,6 +737,18 @@ export default function ChatView() {
           <button type="button" className="icon-btn" onClick={exportMd} title={tr('Tải cuộc trò chuyện (.md)', 'Download conversation (.md)')} aria-label={tr('Tải cuộc trò chuyện', 'Download conversation')}>
             <Download size={15} strokeWidth={1.5} />
           </button>
+        )}
+        {convId && msgs.length > 0 && (
+          <button type="button" className="icon-btn" onClick={shareConv} title={tr('Chia sẻ bằng liên kết', 'Share via link')} aria-label={tr('Chia sẻ', 'Share')}>
+            <Link2 size={15} strokeWidth={1.5} />
+          </button>
+        )}
+        {shareUrl && (
+          <div className="flex items-center gap-2 rounded-md border border-line bg-surface px-2 py-1 text-xs">
+            <span className="max-w-[220px] truncate font-mono text-muted">{shareUrl}</span>
+            <span className="text-ok">{tr('đã chép', 'copied')}</span>
+            <button type="button" className="text-danger hover:underline" onClick={unshare}>{tr('Thu hồi', 'Revoke')}</button>
+          </div>
         )}
         <div className="ml-auto hidden items-center text-xs text-muted sm:flex">
           <span className="font-mono tabular-nums">{tokens?.unlimited ? '∞' : fmtNum(tokens?.balance)} token</span>
@@ -954,7 +986,7 @@ export default function ChatView() {
                 type="file"
                 multiple
                 className="hidden"
-                accept="image/png,image/jpeg,image/webp,image/gif,.pdf,.doc,.docx,.xlsx,.csv,.txt,.md,.json,.html,.css,.js,.ts,.py,.java,.cs,.lua"
+                accept="image/png,image/jpeg,image/webp,image/gif,.pdf,.doc,.docx,.pptx,.xlsx,.csv,.txt,.md,.json,.html,.css,.js,.ts,.py,.java,.cs,.lua"
                 onChange={(e) => {
                   uploadFiles(Array.from(e.target.files || []));
                   e.target.value = '';

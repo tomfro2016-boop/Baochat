@@ -17,7 +17,28 @@ export async function extractText(name: string, mime: string, data: Buffer): Pro
       const { extractText: pdfText, getDocumentProxy } = await import('unpdf');
       const pdf = await getDocumentProxy(new Uint8Array(data));
       const { text } = await pdfText(pdf, { mergePages: true });
-      return String(text).slice(0, MAX);
+      const t = String(text).trim();
+      if (t.replace(/\s/g, '').length < 20) {
+        return '[PDF này không có lớp chữ (có thể là bản scan/ảnh). Không đọc được nội dung; hãy nhờ người dùng gửi bản có thể chọn chữ hoặc chụp từng trang thành ảnh.]';
+      }
+      return t.slice(0, MAX);
+    }
+    if (/\.pptx$/i.test(name) || mime.includes('presentationml')) {
+      const JSZip = (await import('jszip')).default;
+      const zip = await JSZip.loadAsync(data);
+      const slideNames = Object.keys(zip.files)
+        .filter((n) => /^ppt\/slides\/slide\d+\.xml$/.test(n))
+        .sort((a, b) => parseInt(a.replace(/\D/g, ''), 10) - parseInt(b.replace(/\D/g, ''), 10));
+      const dec = (x: string) => x.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+      let out = '';
+      let i = 0;
+      for (const n of slideNames) {
+        i++;
+        const xml = await zip.files[n].async('string');
+        const paras = xml.split(/<\/a:p>/).map((p) => [...p.matchAll(/<a:t[^>]*>([^<]*)<\/a:t>/g)].map((m) => dec(m[1])).join('')).filter((x) => x.trim());
+        out += `## Slide ${i}\n${paras.join('\n')}\n\n`;
+      }
+      return (out.trim() || '[PPTX không có chữ để đọc]').slice(0, MAX);
     }
     if (/\.docx$/i.test(name) || mime.includes('wordprocessingml')) {
       const mammoth = await import('mammoth');

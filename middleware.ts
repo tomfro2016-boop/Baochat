@@ -6,7 +6,7 @@ const PUBLIC = ['/login', '/register', '/forgot', '/reset', '/verify'];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (pathname.startsWith('/api') || pathname.startsWith('/_next') || pathname === '/icon.svg') return NextResponse.next();
+  if (pathname.startsWith('/api') || pathname.startsWith('/_next') || /\.(png|svg|ico|webmanifest|jpg|webp|txt)$/.test(pathname)) return NextResponse.next();
   const has = req.cookies.has('bc_session');
   const isPublic = PUBLIC.some((p) => pathname === p || pathname.startsWith(p + '/'));
   if (!has && !isPublic) {

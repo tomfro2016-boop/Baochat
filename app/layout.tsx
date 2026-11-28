@@ -10,7 +10,7 @@ const mono = JetBrains_Mono({ subsets: ['latin', 'vietnamese'], variable: '--fon
 export const metadata: Metadata = {
   title: 'Baochat',
   description: 'Baochat: trợ lý AI đa năng — trò chuyện, tìm kiếm Internet, tạo website, tài liệu, slide và bảng tính.',
-  icons: { icon: '/icon.png' },
+  icons: { icon: '/icon.png', apple: '/pwa-192.png' },
 };
 
 export const viewport: Viewport = {

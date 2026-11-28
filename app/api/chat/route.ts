@@ -7,6 +7,7 @@ import { getSettings } from '@/lib/settings';
 import { applyResetIfDue, loadFreshUserTokens, chargeTokens, estimateTokens } from '@/lib/tokens';
 import { listAvailableModels, orderModels, streamWithFallback, type ChatMsg, type ModelRow } from '@/lib/ai/providers';
 import { buildSystemPrompt, type Mode } from '@/lib/ai/prompt';
+import { PRESET_IDS } from '@/lib/ai/presets';
 import { searchAndRead } from '@/lib/search';
 import { isImage } from '@/lib/files';
 import { env } from '@/lib/env';
@@ -25,6 +26,7 @@ const schema = z.object({
   search: z.boolean().default(false),
   mode: z.enum(['serious', 'casual', 'funny', 'playful']).optional(),
   modelId: z.string().max(80).nullable().optional(),
+  preset: z.enum(PRESET_IDS).nullable().optional(),
   editMessageId: z.string().uuid().optional(),
 });
 
@@ -203,11 +205,12 @@ export const POST = handler(async (req) => {
         userName: user.display_name,
         withSearch: b.search,
         searchContext,
+        preset: b.preset ?? null,
       });
       const full: ChatMsg[] = [{ role: 'system', content: system }, ...chatMsgs];
       const estIn = estimateTokens(full.map((m) => m.content).join('\n')) + (needVision ? 800 : 0);
       const balanceNow = user.isAdmin ? Infinity : tk.token_balance;
-      const maxOut = user.isAdmin ? 4096 : Math.max(256, Math.min(4096, Math.floor(balanceNow - estIn)));
+      const maxOut = user.isAdmin ? 2048 : Math.max(256, Math.min(2048, Math.floor(balanceNow - estIn)));
 
       let text = '';
       let usage: { input: number; output: number } | null = null;
@@ -223,6 +226,16 @@ export const POST = handler(async (req) => {
           if (ev.delta) {
             text += ev.delta;
             send({ type: 'delta', t: ev.delta });
+            // chống lặp: đoạn 120 ký tự cuối đã xuất hiện trước đó -> model đang lặp, dừng và cắt bản lặp
+            if (text.length >= 300) {
+              const tail = text.slice(-120);
+              const p = text.lastIndexOf(tail, text.length - 121);
+              if (p >= 0) {
+                const cycle = text.length - 120 - p;
+                text = text.slice(0, text.length - cycle).trimEnd();
+                break;
+              }
+            }
           }
           if (ev.usage) usage = ev.usage;
         }

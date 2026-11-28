@@ -12,15 +12,19 @@ import {
   ChevronDown,
   Copy,
   Cpu,
+  Download,
   FileText,
   Globe,
   Megaphone,
   MessageCircle,
+  Mic,
   Paperclip,
   Pencil,
   RefreshCw,
   Scale,
   Smile,
+  UserRound,
+  Volume2,
   Square,
   ThumbsDown,
   ThumbsUp,
@@ -31,6 +35,7 @@ import {
 } from 'lucide-react';
 import Markdown from './Markdown';
 import DotField from './fx/DotField';
+import { PRESETS } from '@/lib/ai/presets';
 import Magnetic from './fx/Magnetic';
 import Scramble from './fx/Scramble';
 import { useSpotlight } from './fx/useSpotlight';
@@ -174,7 +179,7 @@ function SourceList({ sources }: { sources: Source[] }) {
 }
 
 export default function ChatView() {
-  const { me, tr, refresh, bumpConvs, patchTokens } = useApp();
+  const { me, tr, lang, refresh, bumpConvs, patchTokens } = useApp();
   const router = useRouter();
   const pathname = usePathname();
   const urlId = pathname.match(/^\/c\/([0-9a-f-]{36})$/)?.[1] ?? null;
@@ -188,6 +193,22 @@ export default function ChatView() {
   const [search, setSearch] = useState(false);
   const [mode, setMode] = useState<Mode>('casual');
   const [modelId, setModelId] = useState<string>('auto');
+  const [preset, setPresetState] = useState<string>('none');
+  const [listening, setListening] = useState(false);
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
+  const recRef = useRef<any>(null);
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem('bc_preset');
+      if (v && PRESETS.some((p) => p.id === v)) setPresetState(v);
+    } catch {}
+  }, []);
+  const setPreset = (v: string) => {
+    setPresetState(v);
+    try {
+      localStorage.setItem('bc_preset', v);
+    } catch {}
+  };
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -356,6 +377,7 @@ export default function ChatView() {
             search,
             mode,
             modelId: modelId === 'auto' ? null : modelId,
+            preset: preset === 'none' ? null : preset,
             editMessageId: opts.editMessageId,
           },
           (e: SseEvent) => {
@@ -413,7 +435,7 @@ export default function ChatView() {
         if (realConv) bumpConvs();
       }
     },
-    [busy, convId, search, mode, modelId, router, bumpConvs, patchTokens, refresh],
+    [busy, convId, search, mode, modelId, preset, router, bumpConvs, patchTokens, refresh],
   );
 
   const send = () => {
@@ -426,6 +448,72 @@ export default function ChatView() {
   };
 
   const stop = () => abortRef.current?.abort();
+
+  // Nhập bằng giọng nói (trình duyệt hỗ trợ Web Speech API: Chrome, Edge, Safari)
+  const toggleMic = () => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) {
+      alert(tr('Trình duyệt này chưa hỗ trợ nhập giọng nói. Hãy dùng Chrome hoặc Edge', 'This browser does not support voice input. Try Chrome or Edge'));
+      return;
+    }
+    if (listening) {
+      recRef.current?.stop();
+      return;
+    }
+    const rec = new SR();
+    rec.lang = lang === 'vi' ? 'vi-VN' : 'en-US';
+    rec.interimResults = false;
+    rec.continuous = true;
+    rec.onresult = (e: any) => {
+      let t = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) t += e.results[i][0].transcript;
+      if (t) setInput((cur) => (cur ? cur.replace(/\s*$/, ' ') : '') + t.trim());
+    };
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    recRef.current = rec;
+    setListening(true);
+    rec.start();
+  };
+
+  // Đọc to câu trả lời bằng giọng của trình duyệt
+  const speak = (m: Msg) => {
+    if (!('speechSynthesis' in window)) return;
+    if (speakingId === m.id) {
+      window.speechSynthesis.cancel();
+      setSpeakingId(null);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const plain = m.content.replace(/```[\s\S]*?```/g, ' ').replace(/[*_`#>\[\]]/g, '').slice(0, 4000);
+    const u = new SpeechSynthesisUtterance(plain);
+    u.lang = lang === 'vi' ? 'vi-VN' : 'en-US';
+    u.onend = () => setSpeakingId(null);
+    u.onerror = () => setSpeakingId(null);
+    setSpeakingId(m.id);
+    window.speechSynthesis.speak(u);
+  };
+  useEffect(() => () => {
+    recRef.current?.stop?.();
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+  }, []);
+
+  // Tải cuộc trò chuyện về dạng Markdown
+  const exportMd = () => {
+    const title = (msgs.find((m) => m.role === 'user')?.content || 'Baochat').slice(0, 60).replace(/\s+/g, ' ');
+    const body = msgs
+      .filter((m) => m.content)
+      .map((m) => `## ${m.role === 'user' ? me?.user.displayName || 'Bạn' : 'Baochat'}\n\n${m.content}`)
+      .join('\n\n---\n\n');
+    const blob = new Blob([`# ${title}\n\n${body}\n`], { type: 'text/markdown;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `baochat-${new Date().toISOString().slice(0, 10)}.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
 
   const saveEdit = () => {
     if (!editing) return;
@@ -502,6 +590,17 @@ export default function ChatView() {
           options={[{ id: 'auto', label: tr('Tự động', 'Auto') }, ...models.map((m) => ({ id: m.id, label: m.label, hint: m.vision ? 'Vision' : undefined }))]}
         />
         <Dropdown value={mode} onChange={setMode} icon={(() => { const I = MODES.find((m) => m.id === mode)?.icon ?? MessageCircle; return <I size={14} strokeWidth={1.5} className="text-muted" />; })()} options={MODES.map((m) => ({ id: m.id, label: tr(m.vi, m.en) }))} />
+        <Dropdown
+          value={preset}
+          onChange={setPreset}
+          icon={<UserRound size={14} strokeWidth={1.5} className="text-muted" />}
+          options={[{ id: 'none', label: tr('Trợ lý chung', 'General') }, ...PRESETS.map((p) => ({ id: p.id as string, label: tr(p.vi, p.en) }))]}
+        />
+        {msgs.length > 0 && (
+          <button type="button" className="icon-btn" onClick={exportMd} title={tr('Tải cuộc trò chuyện (.md)', 'Download conversation (.md)')} aria-label={tr('Tải cuộc trò chuyện', 'Download conversation')}>
+            <Download size={15} strokeWidth={1.5} />
+          </button>
+        )}
         <div className="ml-auto hidden items-center text-xs text-muted sm:flex">
           <span className="font-mono tabular-nums">{tokens?.unlimited ? '∞' : fmtNum(tokens?.balance)} token</span>
         </div>
@@ -643,6 +742,9 @@ export default function ChatView() {
                           <button className="icon-btn !h-8 !w-8" onClick={() => copy(m)} title={tr('Sao chép', 'Copy')} aria-label={tr('Sao chép', 'Copy')}>
                             {copied === m.id ? <Check size={15} strokeWidth={1.5} className="text-ok" /> : <Copy size={15} strokeWidth={1.5} />}
                           </button>
+                          <button className={`icon-btn !h-8 !w-8 ${speakingId === m.id ? '!text-primary' : ''}`} onClick={() => speak(m)} title={tr('Đọc to', 'Read aloud')} aria-label={tr('Đọc to', 'Read aloud')}>
+                            <Volume2 size={15} strokeWidth={1.5} />
+                          </button>
                           {!m.id.startsWith('tmp-') && (
                             <>
                               <button className={`icon-btn !h-8 !w-8 ${m.rating === 1 ? '!text-ok' : ''}`} onClick={() => rate(m, 1)} title={tr('Câu trả lời tốt', 'Good answer')} aria-label="Like">
@@ -743,6 +845,9 @@ export default function ChatView() {
               />
               <button className="icon-btn" onClick={() => fileRef.current?.click()} title={tr('Đính kèm tệp / hình ảnh', 'Attach files / images')} aria-label={tr('Đính kèm', 'Attach')}>
                 <Paperclip size={16} strokeWidth={1.5} />
+              </button>
+              <button className={`icon-btn ${listening ? '!text-danger' : ''}`} onClick={toggleMic} title={listening ? tr('Dừng nói', 'Stop dictation') : tr('Nhập bằng giọng nói', 'Voice input')} aria-label={tr('Nhập bằng giọng nói', 'Voice input')} aria-pressed={listening}>
+                <Mic size={16} strokeWidth={1.5} />
               </button>
               <button
                 className={`inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs transition-colors duration-150 ${search ? 'bg-surface2 text-primary' : 'text-muted hover:bg-surface2 hover:text-ink'}`}

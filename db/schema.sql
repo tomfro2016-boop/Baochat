@@ -238,3 +238,6 @@ CREATE TABLE IF NOT EXISTS shared_conversations (
   created_at       timestamptz NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS shared_conv_unique ON shared_conversations (conversation_id);
+
+-- Ghim cuộc trò chuyện
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS pinned boolean NOT NULL DEFAULT false;

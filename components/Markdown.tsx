@@ -3,8 +3,12 @@
 import { isValidElement, memo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
+import 'katex/dist/katex.min.css';
 import { Check, Copy } from 'lucide-react';
+import ChartBlock, { parseChart } from './ChartBlock';
 
 function nodeText(node: any): string {
   if (typeof node === 'string') return node;
@@ -19,6 +23,10 @@ function CodeBlock({ children }: { children: any }) {
   const cls: string = codeEl?.props?.className || '';
   const lang = /language-([\w-]+)/.exec(cls)?.[1] || 'code';
   const text = nodeText(codeEl?.props?.children).replace(/\n$/, '');
+  if (lang === 'chart') {
+    const spec = parseChart(text);
+    if (spec) return <ChartBlock spec={spec} />;
+  }
   return (
     <div className="code-block my-3 overflow-hidden rounded-lg border border-line">
       <div className="flex items-center justify-between bg-[#1c1a16] px-4 py-1.5 text-xs text-[#948e83]">
@@ -43,8 +51,8 @@ function MarkdownImpl({ children }: { children: string }) {
   return (
     <div className="prose-bc break-words">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[[rehypeHighlight, { detect: true, ignoreMissing: true }]]}
+        remarkPlugins={[remarkGfm, [remarkMath, { singleDollarTextMath: false }]]}
+        rehypePlugins={[[rehypeKatex, { throwOnError: false, strict: false }], [rehypeHighlight, { detect: true, ignoreMissing: true }]]}
         components={{
           pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
           a: ({ href, children }) => (

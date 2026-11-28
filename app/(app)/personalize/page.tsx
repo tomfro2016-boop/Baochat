@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Brain, Check, Plus, Trash2 } from 'lucide-react';
+import { Brain, Check, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { ErrorNote, Field, OkNote, Page, Section, Spinner, Toggle } from '@/components/ui';
 import { useApp, type Mode } from '@/components/Providers';
 import { api } from '@/lib/client/api';
@@ -165,6 +165,20 @@ export default function PersonalizePage() {
       const r = await api<{ memory: Memory }>('/api/memories', { body: { content } });
       setMemories((m) => [r.memory, ...(m ?? [])]);
       setNewMem('');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    }
+  };
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editVal, setEditVal] = useState('');
+  const saveMemory = async () => {
+    const content = editVal.trim();
+    if (!editId || content.length < 2) return;
+    const id = editId;
+    try {
+      await api(`/api/memories/${id}`, { method: 'PATCH', body: { content } });
+      setMemories((m) => (m ?? []).map((x) => (x.id === id ? { ...x, content } : x)));
+      setEditId(null);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     }
@@ -344,8 +358,35 @@ export default function PersonalizePage() {
                 <ul className="mt-4 space-y-2">
                   {memories.map((m) => (
                     <li key={m.id} className="flex items-start gap-3 rounded-md bg-surface2 px-3 py-2 text-sm">
-                      <span className="flex-1 break-words">{m.content}</span>
-                      <span className="chip shrink-0 !py-0.5 text-[10px]">{m.source === 'auto' ? 'auto' : tr('thủ công', 'manual')}</span>
+                      {editId === m.id ? (
+                        <>
+                          <input
+                            className="input flex-1 !py-1"
+                            value={editVal}
+                            maxLength={500}
+                            autoFocus
+                            onChange={(e) => setEditVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.nativeEvent.isComposing) saveMemory();
+                              if (e.key === 'Escape') setEditId(null);
+                            }}
+                          />
+                          <button className="shrink-0 text-muted transition-colors hover:text-ok" onClick={saveMemory} aria-label={tr('Lưu', 'Save')}>
+                            <Check size={15} />
+                          </button>
+                          <button className="shrink-0 text-muted transition-colors hover:text-ink" onClick={() => setEditId(null)} aria-label={tr('Hủy', 'Cancel')}>
+                            <X size={15} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="flex-1 break-words">{m.content}</span>
+                          <span className="chip shrink-0 !py-0.5 text-[10px]">{m.source === 'auto' ? 'auto' : tr('thủ công', 'manual')}</span>
+                          <button className="shrink-0 text-muted transition-colors hover:text-ink" onClick={() => { setEditId(m.id); setEditVal(m.content); }} aria-label={tr('Sửa', 'Edit')}>
+                            <Pencil size={15} />
+                          </button>
+                        </>
+                      )}
                       <button className="shrink-0 text-muted transition-colors hover:text-danger" onClick={() => delMemory(m.id)} aria-label={tr('Xóa', 'Delete')}>
                         <Trash2 size={15} />
                       </button>

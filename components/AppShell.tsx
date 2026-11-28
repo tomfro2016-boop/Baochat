@@ -4,7 +4,7 @@ import { useEffect, useId, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, Coins, LogOut, Menu, Moon, Pencil, Plus, Search, Settings, Shield, SlidersHorizontal, Sun, Trash2, Wand2, X } from 'lucide-react';
+import { Check, Coins, LogOut, Menu, Moon, Pencil, Pin, PinOff, Plus, Search, Settings, Shield, SlidersHorizontal, Sun, Trash2, Wand2, X } from 'lucide-react';
 import { Avatar, Countdown, Logo, Spinner } from './ui';
 import CountUp from './fx/CountUp';
 import CommandPalette from './CommandPalette';
@@ -12,7 +12,7 @@ import { useApp } from './Providers';
 import { api } from '@/lib/client/api';
 import { timeAgo } from '@/lib/client/util';
 
-type Conv = { id: string; title: string; updated_at: string };
+type Conv = { id: string; title: string; updated_at: string; pinned?: boolean };
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { me, tr, lang, convVersion, bumpConvs, theme, setTheme } = useApp();
@@ -42,6 +42,10 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     await api(`/api/conversations/${id}`, { method: 'DELETE' });
     bumpConvs();
     if (activeId === id) router.push('/');
+  }
+  async function togglePin(c: Conv) {
+    await api(`/api/conversations/${c.id}`, { method: 'PATCH', body: { pinned: !c.pinned } });
+    bumpConvs();
   }
   async function rename(id: string) {
     const title = renameVal.trim();
@@ -116,13 +120,16 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                   <Link
                     href={`/c/${c.id}`}
                     onClick={onNavigate}
-                    className={`relative block rounded-md px-3 py-2 pr-16 text-sm transition-colors duration-150 ${activeId === c.id ? 'text-ink' : 'text-muted hover:bg-surface hover:text-ink'}`}
+                    className={`relative block rounded-md px-3 py-2 pr-24 text-sm transition-colors duration-150 ${activeId === c.id ? 'text-ink' : 'text-muted hover:bg-surface hover:text-ink'}`}
                   >
                     {activeId === c.id && <motion.span layoutId={`conv-${gid}`} className="absolute inset-0 rounded-md bg-surface2" transition={{ type: 'spring', stiffness: 500, damping: 40 }} />}
-                    <span className="relative block truncate">{c.title}</span>
+                    <span className="relative flex items-center gap-1.5 truncate">{c.pinned && <Pin size={11} strokeWidth={1.5} className="shrink-0 text-primary" />}<span className="truncate">{c.title}</span></span>
                     <span className="relative block font-mono text-[11px] opacity-70">{timeAgo(c.updated_at, lang)}</span>
                   </Link>
                   <div className="absolute right-1.5 top-1/2 hidden -translate-y-1/2 gap-0.5 group-hover:flex max-lg:flex">
+                    <button className="icon-btn !h-7 !w-7" aria-label={tr('Ghim', 'Pin')} title={c.pinned ? tr('Bỏ ghim', 'Unpin') : tr('Ghim', 'Pin')} onClick={() => togglePin(c)}>
+                      {c.pinned ? <PinOff size={13} strokeWidth={1.5} /> : <Pin size={13} strokeWidth={1.5} />}
+                    </button>
                     <button
                       className="icon-btn !h-7 !w-7"
                       aria-label={tr('Đổi tên', 'Rename')}

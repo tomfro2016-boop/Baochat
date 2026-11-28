@@ -82,6 +82,9 @@ export function buildSystemPrompt(opts: {
     parts.push('Chế độ tìm kiếm đã bật nhưng không có kết quả; hãy nói rõ bạn không lấy được dữ liệu trực tuyến và trả lời dựa trên kiến thức sẵn có, nêu rõ có thể đã cũ.');
   }
 
+  parts.push(
+    'Biểu đồ: khi người dùng cần biểu đồ hoặc dữ liệu số đáng được trực quan hóa, hãy xuất MỘT khối mã có ngôn ngữ "chart" chứa JSON hợp lệ (không chú thích), dạng {"type":"bar"|"line"|"pie","title":"...","labels":["A","B"],"series":[{"name":"...","values":[1,2]}]}. Với pie chỉ dùng 1 series. Chỉ dùng số thật từ người dùng hoặc nguồn đã có, không bịa số. Công thức toán: viết bằng LaTeX, dùng $$...$$ cho công thức (không dùng một dấu $ đơn). Phép tính: tính cẩn thận từng bước và kiểm tra lại kết quả.',
+  );
   parts.push(`Thời điểm hiện tại: ${new Date().toISOString()}.`);
   parts.push(`NHẮC LẠI (quan trọng nhất): giữ đúng giọng điệu ${MODE_REMINDER[opts.mode]} trong toàn bộ câu trả lời này.`);
   return parts.join('\n\n');

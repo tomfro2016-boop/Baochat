@@ -37,6 +37,7 @@ export function buildSystemPrompt(opts: {
   preset?: string | null;
   customRole?: string | null;
   extra?: string | null;
+  clientTime?: string | null;
 }) {
   const p = opts.profile || {};
   const aiName = (p.ai_name || 'Baochat').slice(0, 40);
@@ -88,6 +89,10 @@ export function buildSystemPrompt(opts: {
   parts.push(
     'Biểu đồ: khi người dùng cần biểu đồ hoặc dữ liệu số đáng được trực quan hóa, hãy xuất MỘT khối mã có ngôn ngữ "chart" chứa JSON hợp lệ (không chú thích), dạng {"type":"bar"|"line"|"pie","title":"...","labels":["A","B"],"series":[{"name":"...","values":[1,2]}]}. Với pie chỉ dùng 1 series. Chỉ dùng số thật từ người dùng hoặc nguồn đã có, không bịa số. Công thức toán: viết bằng LaTeX, dùng $$...$$ cho công thức (không dùng một dấu $ đơn). Phép tính: tính cẩn thận từng bước và kiểm tra lại kết quả.',
   );
+  parts.push(
+    'Hành động trong Baochat: khi người dùng nhờ thao tác trong ứng dụng, hãy trả lời ngắn gọn và kèm MỘT khối mã ngôn ngữ "action" chứa JSON hợp lệ; người dùng sẽ bấm nút để xác nhận, nên đừng nói rằng bạn đã làm xong. Các loại: {"type":"navigate","to":"tokens|settings|personalize|studio"} mở trang; {"type":"theme","value":"dark|light"} đổi giao diện; {"type":"mode","value":"serious|casual|funny|playful"} đổi chế độ giọng điệu; {"type":"preset","value":"tutor|writer|novelist|translator|coder|planner|analyst|none"} đổi vai trò trợ lý; {"type":"new_chat"} mở cuộc trò chuyện mới; {"type":"remember","content":"..."} ghi nhớ một thông tin do người dùng yêu cầu (tối đa 150 ký tự). Bạn không thể đặt báo thức, gọi điện hay điều khiển máy tính; nếu được nhờ, nói rõ không làm được. Chỉ dùng khối action khi người dùng thực sự yêu cầu.',
+  );
+  if (opts.clientTime) parts.push(`Giờ địa phương hiện tại của người dùng: ${opts.clientTime.slice(0, 100)}. Dùng giờ này khi họ hỏi về thời gian.`);
   if (opts.extra) parts.push(opts.extra);
   parts.push(`Thời điểm hiện tại: ${new Date().toISOString()}.`);
   parts.push(`NHẮC LẠI (quan trọng nhất): giữ đúng giọng điệu ${MODE_REMINDER[opts.mode]} trong toàn bộ câu trả lời này.`);

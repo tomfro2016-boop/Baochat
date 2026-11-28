@@ -9,6 +9,7 @@ import rehypeHighlight from 'rehype-highlight';
 import 'katex/dist/katex.min.css';
 import { Check, Copy } from 'lucide-react';
 import ChartBlock, { parseChart } from './ChartBlock';
+import ActionCard, { parseAction } from './ActionCard';
 
 function nodeText(node: any): string {
   if (typeof node === 'string') return node;
@@ -23,6 +24,10 @@ function CodeBlock({ children }: { children: any }) {
   const cls: string = codeEl?.props?.className || '';
   const lang = /language-([\w-]+)/.exec(cls)?.[1] || 'code';
   const text = nodeText(codeEl?.props?.children).replace(/\n$/, '');
+  if (lang === 'action') {
+    const act = parseAction(text);
+    if (act) return <ActionCard action={act} />;
+  }
   if (lang === 'chart') {
     const spec = parseChart(text);
     if (spec) return <ChartBlock spec={spec} />;

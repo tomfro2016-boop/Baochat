@@ -30,6 +30,7 @@ const schema = z.object({
   preset: z.enum(PRESET_IDS).nullable().optional(),
   assistantId: z.string().uuid().nullable().optional(),
   deep: z.enum(DEEP_IDS).nullable().optional(),
+  clientTime: z.string().max(100).optional(),
   editMessageId: z.string().uuid().optional(),
 });
 
@@ -236,6 +237,7 @@ export const POST = handler(async (req) => {
         preset: b.preset ?? null,
         customRole: customRow?.instructions ?? null,
         extra: deepText(deep),
+        clientTime: b.clientTime ?? null,
       });
       const full: ChatMsg[] = [{ role: 'system', content: system }, ...chatMsgs];
       const estIn = estimateTokens(full.map((m) => m.content).join('\n')) + (needVision ? 800 : 0);

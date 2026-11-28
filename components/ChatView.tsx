@@ -249,6 +249,16 @@ export default function ChatView() {
     } catch {}
     api<{ assistants: { id: string; name: string }[]; added: { id: string; name: string }[] }>('/api/assistants').then((d) => setMyAssistants([...d.assistants, ...d.added])).catch(() => {});
   }, []);
+  useEffect(() => {
+    const onAct = (ev: Event) => {
+      const d = (ev as CustomEvent).detail as { type: string; value: string };
+      if (d?.type === 'mode' && ['serious', 'casual', 'funny', 'playful'].includes(d.value)) setMode(d.value as Mode);
+      if (d?.type === 'preset' && (d.value === 'none' || PRESETS.some((p) => p.id === d.value))) setPreset(d.value);
+    };
+    window.addEventListener('bc-action', onAct);
+    return () => window.removeEventListener('bc-action', onAct);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const setPreset = (v: string) => {
     setPresetState(v);
     try {
@@ -443,6 +453,7 @@ export default function ChatView() {
             preset: preset === 'none' || preset.startsWith('a:') ? null : preset,
             assistantId: preset.startsWith('a:') ? preset.slice(2) : null,
             deep: deep === 'none' ? null : deep,
+            clientTime: new Date().toString().slice(0, 100),
             editMessageId: opts.editMessageId,
           },
           (e: SseEvent) => {

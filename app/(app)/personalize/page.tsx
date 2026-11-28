@@ -169,27 +169,46 @@ export default function PersonalizePage() {
       setErr(e instanceof Error ? e.message : String(e));
     }
   };
-  type Asst = { id: string; name: string; instructions: string };
+  type Asst = { id: string; name: string; description: string; instructions: string; share_token: string | null };
+  type Added = { id: string; name: string; description: string; owner_name: string };
   const [assts, setAssts] = useState<Asst[]>([]);
+  const [added, setAdded] = useState<Added[]>([]);
+  const [aId, setAId] = useState<string | null>(null);
   const [aName, setAName] = useState('');
+  const [aDesc, setADesc] = useState('');
   const [aText, setAText] = useState('');
   useEffect(() => {
-    api<{ assistants: Asst[] }>('/api/assistants').then((d) => setAssts(d.assistants)).catch(() => {});
+    api<{ assistants: Asst[]; added: Added[] }>('/api/assistants').then((d) => { setAssts(d.assistants); setAdded(d.added); }).catch(() => {});
   }, []);
-  const addAsst = async () => {
+  const resetAsst = () => { setAId(null); setAName(''); setADesc(''); setAText(''); };
+  const saveAsst = async () => {
     if (!aName.trim() || aText.trim().length < 5) return;
     try {
-      const r = await api<{ assistant: Asst }>('/api/assistants', { body: { name: aName.trim(), instructions: aText.trim() } });
-      setAssts((a) => [...a, r.assistant]);
-      setAName('');
-      setAText('');
+      if (aId) {
+        await api(`/api/assistants/${aId}`, { method: 'PATCH', body: { name: aName.trim(), description: aDesc.trim(), instructions: aText.trim() } });
+        setAssts((a) => a.map((x) => (x.id === aId ? { ...x, name: aName.trim(), description: aDesc.trim(), instructions: aText.trim() } : x)));
+      } else {
+        const r = await api<{ assistant: Asst }>('/api/assistants', { body: { name: aName.trim(), description: aDesc.trim(), instructions: aText.trim() } });
+        setAssts((a) => [...a, r.assistant]);
+      }
+      resetAsst();
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     }
   };
-  const delAsst = async (id: string) => {
-    setAssts((a) => a.filter((x) => x.id !== id));
+  const delAsst = async (id: string, own = true) => {
+    if (own && !confirm(tr('Xóa trợ lý này? Những người đang dùng cũng sẽ mất quyền.', 'Delete this assistant? People using it lose access.'))) return;
+    if (own) setAssts((a) => a.filter((x) => x.id !== id)); else setAdded((a) => a.filter((x) => x.id !== id));
     await api(`/api/assistants/${id}`, { method: 'DELETE' }).catch(() => {});
+  };
+  const shareAsst = async (x: Asst, enabled: boolean) => {
+    try {
+      const r = await api<{ token: string | null }>(`/api/assistants/${x.id}/share`, { body: { enabled } });
+      setAssts((a) => a.map((y) => (y.id === x.id ? { ...y, share_token: r.token } : y)));
+      if (r.token) { try { await navigator.clipboard.writeText(`${window.location.origin}/a/${r.token}`); } catch { /* tự sao chép */ } }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    }
   };
   const [editId, setEditId] = useState<string | null>(null);
   const [editVal, setEditVal] = useState('');
@@ -328,24 +347,62 @@ export default function PersonalizePage() {
 
           <Section title={tr('Trợ lý của tôi', 'My assistants')}>
             <div className="space-y-3">
-              <p className="text-sm text-muted">{tr('Tạo vai trò riêng (ví dụ: "Trợ lý bán hàng của quán"). Chọn trong ô trợ lý ở khung chat.', 'Create your own roles. Pick them from the assistant menu in chat.')}</p>
+              <p className="text-sm text-muted">{tr('Tạo vai trò riêng và chia sẻ bằng liên kết. Bạn toàn quyền sửa, thu hồi hoặc xóa; người được chia sẻ chỉ dùng được, không thấy hướng dẫn bên trong.', 'Create your own roles and share them by link. You can edit, revoke or delete; people you share with can use it but never see the instructions.')}</p>
               <input className="input" placeholder={tr('Tên trợ lý', 'Name')} maxLength={40} value={aName} onChange={(e) => setAName(e.target.value)} />
+              <input className="input" placeholder={tr('Mô tả ngắn (hiện khi chia sẻ)', 'Short description (shown when shared)')} maxLength={200} value={aDesc} onChange={(e) => setADesc(e.target.value)} />
               <textarea className="input min-h-[90px]" placeholder={tr('Hướng dẫn: vai trò, giọng điệu, quy tắc…', 'Instructions: role, tone, rules…')} maxLength={3000} value={aText} onChange={(e) => setAText(e.target.value)} />
-              <button className="btn btn-primary" onClick={addAsst}>{tr('Thêm trợ lý', 'Add assistant')}</button>
+              <div className="flex gap-2">
+                <button className="btn btn-primary" onClick={saveAsst}>{aId ? tr('Lưu thay đổi', 'Save changes') : tr('Thêm trợ lý', 'Add assistant')}</button>
+                {aId && <button className="btn btn-ghost" onClick={resetAsst}>{tr('Hủy', 'Cancel')}</button>}
+              </div>
               {assts.length > 0 && (
                 <ul className="space-y-2">
                   {assts.map((a) => (
-                    <li key={a.id} className="flex items-start gap-3 rounded-md bg-surface2 px-3 py-2 text-sm">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium">{a.name}</p>
-                        <p className="line-clamp-2 break-words text-muted">{a.instructions}</p>
+                    <li key={a.id} className="rounded-md bg-surface2 px-3 py-2 text-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium">{a.name}</p>
+                          <p className="line-clamp-2 break-words text-muted">{a.description || a.instructions}</p>
+                        </div>
+                        <button className="shrink-0 text-muted transition-colors hover:text-ink" onClick={() => { setAId(a.id); setAName(a.name); setADesc(a.description); setAText(a.instructions); }} aria-label={tr('Sửa', 'Edit')}>
+                          <Pencil size={15} />
+                        </button>
+                        <button className="shrink-0 text-muted transition-colors hover:text-danger" onClick={() => delAsst(a.id)} aria-label={tr('Xóa', 'Delete')}>
+                          <Trash2 size={15} />
+                        </button>
                       </div>
-                      <button className="shrink-0 text-muted transition-colors hover:text-danger" onClick={() => delAsst(a.id)} aria-label={tr('Xóa', 'Delete')}>
-                        <Trash2 size={15} />
-                      </button>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                        {a.share_token ? (
+                          <>
+                            <span className="max-w-[260px] truncate font-mono text-muted">/a/{a.share_token}</span>
+                            <button className="text-primary hover:underline" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/a/${a.share_token}`).catch(() => {})}>{tr('Sao chép link', 'Copy link')}</button>
+                            <button className="text-danger hover:underline" onClick={() => shareAsst(a, false)}>{tr('Thu hồi chia sẻ', 'Stop sharing')}</button>
+                          </>
+                        ) : (
+                          <button className="text-primary hover:underline" onClick={() => shareAsst(a, true)}>{tr('Chia sẻ bằng liên kết', 'Share via link')}</button>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
+              )}
+              {added.length > 0 && (
+                <>
+                  <p className="mono-label pt-2">{tr('được chia sẻ với tôi', 'shared with me')}</p>
+                  <ul className="space-y-2">
+                    {added.map((a) => (
+                      <li key={a.id} className="flex items-start gap-3 rounded-md bg-surface2 px-3 py-2 text-sm">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium">{a.name} <span className="text-xs font-normal text-muted">· {a.owner_name}</span></p>
+                          {a.description && <p className="line-clamp-2 break-words text-muted">{a.description}</p>}
+                        </div>
+                        <button className="shrink-0 text-muted transition-colors hover:text-danger" onClick={() => delAsst(a.id, false)} aria-label={tr('Gỡ', 'Remove')}>
+                          <X size={15} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
             </div>
           </Section>

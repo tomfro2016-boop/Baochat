@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 // Chuyển hướng nhanh khi chưa có cookie phiên. Việc xác thực thật sự luôn nằm ở API (server) –
 // middleware này chỉ để trải nghiệm người dùng, không phải lớp bảo mật.
-const PUBLIC = ['/login', '/register', '/forgot', '/reset', '/verify', '/s'];
+const PUBLIC = ['/login', '/register', '/forgot', '/reset', '/verify', '/s', '/a'];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

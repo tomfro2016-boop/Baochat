@@ -8,6 +8,7 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpRight,
+  Camera,
   Check,
   ChevronDown,
   Copy,
@@ -179,6 +180,44 @@ function SourceList({ sources }: { sources: Source[] }) {
   );
 }
 
+async function videoFrames(file: File, n: number): Promise<File[]> {
+  const url = URL.createObjectURL(file);
+  try {
+    const v = document.createElement('video');
+    v.muted = true;
+    v.preload = 'auto';
+    v.src = url;
+    await new Promise<void>((res, rej) => {
+      v.onloadedmetadata = () => res();
+      v.onerror = () => rej(new Error('video'));
+    });
+    const dur = isFinite(v.duration) && v.duration > 0 ? v.duration : 1;
+    const vw = v.videoWidth || 768;
+    const vh = v.videoHeight || 432;
+    const scale = Math.min(1, 768 / Math.max(vw, vh));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(vw * scale));
+    c.height = Math.max(1, Math.round(vh * scale));
+    const ctx = c.getContext('2d');
+    const out: File[] = [];
+    if (!ctx) return out;
+    const base = file.name.replace(/\.[^.]+$/, '').slice(0, 40) || 'video';
+    for (let i = 0; i < n; i++) {
+      const t = Math.max(0, Math.min(dur - 0.05, (dur * (i + 0.5)) / n));
+      await new Promise<void>((res) => {
+        v.onseeked = () => res();
+        v.currentTime = t;
+      });
+      ctx.drawImage(v, 0, 0, c.width, c.height);
+      const blob = await new Promise<Blob | null>((res) => c.toBlob(res, 'image/jpeg', 0.8));
+      if (blob) out.push(new File([blob], `${base}-khung-${i + 1}.jpg`, { type: 'image/jpeg' }));
+    }
+    return out;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 export default function ChatView() {
   const { me, tr, lang, refresh, bumpConvs, patchTokens } = useApp();
   const router = useRouter();
@@ -204,7 +243,7 @@ export default function ChatView() {
       const v = localStorage.getItem('bc_preset');
       if (v && (PRESETS.some((p) => p.id === v) || v.startsWith('a:'))) setPresetState(v);
     } catch {}
-    api<{ assistants: { id: string; name: string }[] }>('/api/assistants').then((d) => setMyAssistants(d.assistants)).catch(() => {});
+    api<{ assistants: { id: string; name: string }[]; added: { id: string; name: string }[] }>('/api/assistants').then((d) => setMyAssistants([...d.assistants, ...d.added])).catch(() => {});
   }, []);
   const setPreset = (v: string) => {
     setPresetState(v);
@@ -226,6 +265,7 @@ export default function ChatView() {
   const stickRef = useRef(true);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const camRef = useRef<HTMLInputElement>(null);
   const modeInit = useRef(false);
 
   const tokens = me?.tokens;
@@ -313,6 +353,22 @@ export default function ChatView() {
       if (!files.length) return;
       setError('');
       const max = me?.features.maxUploadMb ?? 10;
+      const expanded: File[] = [];
+      for (const f of files) {
+        if (f.type.startsWith('video/')) {
+          setNotice(tr(`Đang lấy khung hình từ "${f.name}"…`, `Extracting frames from "${f.name}"…`));
+          try {
+            const frames = await videoFrames(f, 6);
+            if (frames.length) {
+              expanded.push(...frames);
+              setNotice(tr(`Đã lấy ${frames.length} khung hình từ video. AI sẽ xem các khung hình này (không nghe được âm thanh).`, `Took ${frames.length} frames from the video. The AI sees these frames (no audio).`));
+              continue;
+            }
+          } catch { /* rơi xuống thông báo lỗi */ }
+          setError(tr(`Không đọc được video "${f.name}".`, `Couldn't read video "${f.name}".`));
+        } else expanded.push(f);
+      }
+      files = expanded;
       for (const f of files) {
         if (pending.length >= 8) {
           setError(tr('Tối đa 8 tệp mỗi tin nhắn.', 'Up to 8 files per message.'));
@@ -989,13 +1045,27 @@ export default function ChatView() {
                 type="file"
                 multiple
                 className="hidden"
-                accept="image/png,image/jpeg,image/webp,image/gif,.pdf,.doc,.docx,.pptx,.xlsx,.csv,.txt,.md,.json,.html,.css,.js,.ts,.py,.java,.cs,.lua"
+                accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,video/quicktime,.pdf,.doc,.docx,.pptx,.xlsx,.csv,.txt,.md,.json,.html,.css,.js,.ts,.py,.java,.cs,.lua"
                 onChange={(e) => {
                   uploadFiles(Array.from(e.target.files || []));
                   e.target.value = '';
                 }}
               />
-              <button className="icon-btn" onClick={() => fileRef.current?.click()} title={tr('Đính kèm tệp / hình ảnh', 'Attach files / images')} aria-label={tr('Đính kèm', 'Attach')}>
+              <input
+                ref={camRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => {
+                  uploadFiles(Array.from(e.target.files || []));
+                  e.target.value = '';
+                }}
+              />
+              <button className="icon-btn" onClick={() => camRef.current?.click()} title={tr('Chụp ảnh', 'Take photo')} aria-label={tr('Chụp ảnh', 'Take photo')}>
+                <Camera size={16} strokeWidth={1.5} />
+              </button>
+              <button className="icon-btn" onClick={() => fileRef.current?.click()} title={tr('Đính kèm tệp, hình ảnh, video', 'Attach files, images, video')} aria-label={tr('Đính kèm', 'Attach')}>
                 <Paperclip size={16} strokeWidth={1.5} />
               </button>
               <button className={`icon-btn ${listening ? '!text-danger' : ''}`} onClick={toggleMic} title={listening ? tr('Dừng nói', 'Stop dictation') : tr('Nhập bằng giọng nói', 'Voice input')} aria-label={tr('Nhập bằng giọng nói', 'Voice input')} aria-pressed={listening}>

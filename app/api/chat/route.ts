@@ -176,7 +176,7 @@ export const POST = handler(async (req) => {
   const models = orderModels(available, b.modelId ?? conv.model_id ?? s.default_model, needVision);
   if (!models.length) throw new ApiError(400, 'Chưa có model hỗ trợ hình ảnh được bật. Hãy bật model có Vision trong Admin.', { code: 'NO_VISION_MODEL' });
 
-  const customRow = b.assistantId ? await q1<{ instructions: string }>('SELECT instructions FROM assistants WHERE id = $1 AND user_id = $2', [b.assistantId, user.id]) : null;
+  const customRow = b.assistantId ? await q1<{ instructions: string }>(`SELECT instructions FROM assistants a WHERE a.id = $1 AND (a.user_id = $2 OR (a.share_token IS NOT NULL AND EXISTS (SELECT 1 FROM assistant_subs s WHERE s.assistant_id = a.id AND s.user_id = $2)))`, [b.assistantId, user.id]) : null;
 
   const encoder = new TextEncoder();
   const ip = clientIp(req);

@@ -21,11 +21,13 @@ export const POST = handler(async (req) => {
   const u = await requireVerifiedUser();
   await rateLimit(`canvas:${u.id}`, 60, 3600);
   const b = await parseBody(req, body);
-  const target = b.scope === 'all' ? b.document : b.selection;
+  const doc: string = b.document ?? '';
+  const scope: 'selection' | 'all' = b.scope ?? 'selection';
+  const target: string = scope === 'all' ? doc : b.selection;
   if (!target.trim()) throw new ApiError(400, 'Chưa có nội dung để sửa');
   const models = orderModels(await listAvailableModels(), null, false);
   if (!models.length) throw new ApiError(400, 'Chưa có model nào được bật.');
-  const user = `ĐOẠN CẦN SỬA:\n<<<\n${target}\n>>>\n\nYÊU CẦU: ${b.instruction}\n\n${b.scope === 'all' ? '' : `TOÀN BỘ TÀI LIỆU (chỉ để tham khảo):\n<<<\n${b.document.slice(0, 20_000)}\n>>>`}`;
+  const user = `ĐOẠN CẦN SỬA:\n<<<\n${target}\n>>>\n\nYÊU CẦU: ${b.instruction}\n\n${scope === 'all' ? '' : `TOÀN BỘ TÀI LIỆU (chỉ để tham khảo):\n<<<\n${doc.slice(0, 20_000)}\n>>>`}`;
   const r = await completeWithFallback(models, [{ role: 'system', content: SYS }, { role: 'user', content: user }], { maxTokens: 3000, temperature: 0.4, signal: req.signal });
   let text = r.text.trim();
   if (!text) throw new ApiError(502, 'AI không trả về nội dung. Hãy thử lại.');
